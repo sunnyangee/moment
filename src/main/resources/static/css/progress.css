@@ -1,0 +1,106 @@
+/* progress.css */
+
+/* 전역 설정 */
+* {
+    box-sizing: border-box;
+  }
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    background-color: black;
+    background-image: url("/images/background.png");
+    background-size: cover;
+    background-position: center;
+    font-family: Arial, sans-serif;
+  
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* 뷰포트 래퍼 */
+  .viewport-wrapper {
+    width: 430px;
+    height: 932px;
+    background: transparent;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+ /* ↓ 이 부분을 progress.css 맨 위 또는 적당한 위치에 붙여주세요 */
+.room-container {
+    /* 뷰포트(wrapper) 전체를 덮도록 */
+    width: 100%;
+    height: 100%;
+    /* 내부 텍스트/버튼 중앙 정렬 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* 안쪽 여백 */
+    padding: 20px;
+    box-sizing: border-box;
+    /* 글자 색 흰색 */
+    color: white;
+    text-align: center;
+}
+
+  
+  .room-container h2 {
+    color: white;
+    font-size: 18px;
+    margin: 0 0 10px;
+  }
+  
+  .room-container p {
+    color: white;
+    font-size: 16px;
+    margin: 0 0 20px;
+    line-height: 1.4;
+  }
+  
+  /* 버튼 스타일 */
+  a.btn {
+    display: inline-block;
+    padding: 14px 30px;
+    margin-top: 20px;
+    font-size: 14px;
+    background-color: #F26BCE;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+  }
+  
+  a.btn:hover {
+    background-color: #e454b7;
+  }
+  
+  /* 모바일 대응 */
+  @media screen and (max-width: 480px) {
+    .viewport-wrapper {
+      width: 100vw;
+      height: 100vh;
+    }
+    .room-container {
+      padding: 16px;
+    }
+    .room-container h2 {
+      font-size: 16px;
+    }
+    .room-container p {
+      font-size: 14px;
+    }
+    a.btn {
+      width: 100%;
+      font-size: 12px;
+      padding: 12px 24px;
+    }
+  }
+  
+  

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>3-3</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <!-- desktop-os 클래스를 미리 붙여서 레터박스를 보장 -->
+  <div class="viewport-wrapper desktop-os">
+    <div class="room-container">
+      <img id="room-image" src="/images/classroom1.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">3-3</div>
+
+      <div class="ui-overlay">
+        <!-- 1차 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="전자 칠판">전자 칠판</button>
+          <button data-item="일체형 흰색 철제 책걸상">일체형 흰색 철제 책걸상</button>
+          <button data-item="개인용 터치패드">개인용 터치패드</button>
+          <button data-item="사물함">사물함</button>
+          <button data-item="청소도구함">청소도구함</button>
+        </div>
+        <!-- “구겨진 종이” 2차 선택지 -->
+        <div id="paper-choice-buttons" class="choice-buttons hidden">
+          <button data-action="examine">구겨진 종이를 자세히 본다</button>
+          <button data-action="ignore">보지 않고 넘어간다</button>
+        </div>
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">3 학년 2 반에서 3 학년 3 반으로 이동한다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+        <!-- 아이템 모달 -->
+        <div id="object-modal" class="object-modal hidden">
+          <button class="close-button" onclick="closeObjectModal()">X</button>
+          <div class="object-image-wrapper">
+            <img id="object-image" src="" alt="아이템 이미지"/>
+          </div>
+          <div id="object-description" class="dialog-box">
+            <p id="object-description-text"></p>
+            <div class="dialog-indicator">▼</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button" onclick="toggleInventory()">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <button class="close-button" onclick="toggleInventory()">X</button>
+        <h3>인벤토리</h3>
+        <ul>
+          <li th:each="item : ${user.items}" th:text="${item.name}">아이템</li>
+        </ul>
+      </div>
+
+      <!-- 다음으로 -->
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    // --- 공통 ---
+    function toggleInventory() {
+      document.getElementById('inventory-modal').classList.toggle('hidden');
+    }
+    function closeObjectModal() {
+      objectModal.classList.add('hidden');
+      choiceButtons.classList.remove('fade-out', 'hidden');
+      // 모두 클릭했으면 NEXT 노출
+      if (clickedItems.size === totalItems) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+    function setViewportSize() {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight*0.01}px`);
+    }
+    window.addEventListener('resize', setViewportSize);
+    window.addEventListener('load', setViewportSize);
+
+    // --- DOM 참조 ---
+    const choiceButtons      = document.getElementById('choice-buttons');
+    const paperChoiceButtons = document.getElementById('paper-choice-buttons');
+    const dialogBox          = document.getElementById('dialog-box');
+    const locationLabel      = document.getElementById('location-label');
+    const roomImage          = document.getElementById('room-image');
+    const objectModal        = document.getElementById('object-modal');
+    const objectImage        = document.getElementById('object-image');
+    const objectDescText     = document.getElementById('object-description-text');
+    const nextButton         = document.getElementById('next-button');
+
+    // --- 데이터 & 상태 ---
+    const clickedItems = new Set();
+    const itemData = {
+      "전자 칠판":      { description: "딱 떨어지지 않는 값이 화면의 끝까지 적혀 있다. 3.141592653589793…", image:"/images/greenboard.png" },
+      "일체형 흰색 철제 책걸상": { description: "서랍 안에 2024년 6월 모의고사 시험지가 구겨져 있다.", image:"/images/chalk_eraser.png" },
+      "개인용 터치패드":  { description: "잠금 화면에 기말고사 시간표가 설정되어 있다.", image:"/images/table_chair.png" },
+      "사물함":          { description: "L자 파일 몇 장이 가지런히 놓여 있다.", image:"/images/attendance_book.png" },
+      "청소도구함":      { description: "도구함을 여는 순간… 구겨진 종이가 눈에 띈다.", image:"/images/attendance_book.png" }
+    };
+    const totalItems = Object.keys(itemData).length;
+
+    // 1차 선택지 클릭
+    choiceButtons.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.item;
+        const item= itemData[key];
+        clickedItems.add(key);
+        choiceButtons.classList.add('fade-out');
+        setTimeout(()=>{
+          choiceButtons.classList.add('hidden');
+          objectImage.src = item.image;
+          objectDescText.innerText = item.description;
+          objectModal.classList.remove('hidden');
+        },600);
+      });
+    });
+
+    // 모달 클릭 → 청소도구함이면 2차 선택지, 아니면 닫기
+    objectModal.addEventListener('click', () => {
+      if ( objectDescText.innerText.startsWith("도구함을 여는 순간") ) {
+        objectModal.classList.add('hidden');
+        paperChoiceButtons.classList.remove('hidden');
+      } else {
+        closeObjectModal();
+      }
+    });
+
+    // 2차(종이) 선택지 클릭
+    paperChoiceButtons.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        paperChoiceButtons.classList.add('hidden');
+        if (btn.dataset.action === 'examine') {
+          objectDescText.innerText = "종이를 펼쳐보니 누군가의 메모가 적혀 있다…";
+          objectModal.classList.remove('hidden');
+        } else {
+            choiceButtons.classList.remove('hidden');
+            choiceButtons.classList.remove('fade-out');
+            // 애니메이션 원하시면 아래 두 줄 추가
+            choiceButtons.classList.add('fade-in');
+            setTimeout(()=> choiceButtons.classList.remove('fade-in'), 600);
+        }
+    });
+});
+
+    // NEXT 클릭 → 다음 페이지
+    nextButton.addEventListener('click', ()=> window.location.href='/3-4');
+
+    // 대화 진행
+    let state = 0;
+    dialogBox.addEventListener('click', ()=>{
+      if(state===0){
+        roomImage.classList.add('fade-out');
+        setTimeout(()=>{
+          roomImage.src='/images/classroom2.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        },600);
+        state++;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>3-2</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/classroom1.jpg" alt="방 이미지" class="room-image"/>
+
+      <div id="location-label" class="location-label hidden">3-2</div>
+
+      <div class="ui-overlay">
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="화이트 보드">화이트 보드</button>
+          <button data-item="수납형 TV">수납형 TV</button>
+          <button data-item="휴대폰 보관 가방">휴대폰 보관 가방</button>
+          <button data-item="빔 프로젝터">빔 프로젝터</button>
+        </div>
+
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">3 학년 1 반에서 3 학년 2 반으로 이동한다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <div id="object-modal" class="object-modal hidden">
+          <button class="close-button" onclick="closeObjectModal()">X</button>
+          <div class="object-image-wrapper">
+            <img id="object-image" src="" alt="아이템 이미지"/>
+          </div>
+          <div id="object-description" class="dialog-box">
+            <p id="object-description-text"></p>
+            <div class="dialog-indicator">▼</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="inventory-button" onclick="toggleInventory()">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <button class="close-button" onclick="toggleInventory()">X</button>
+        <h3>인벤토리</h3>
+        <ul>
+          <li th:each="item : ${user.items}" th:text="${item.name}">아이템</li>
+        </ul>
+      </div>
+
+      <!-- 다음으로 넘어가는 버튼 -->
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    function toggleInventory() {
+      document.getElementById('inventory-modal').classList.toggle('hidden');
+    }
+
+    function closeObjectModal() {
+      document.getElementById('object-modal').classList.add('hidden');
+      const cb = document.getElementById('choice-buttons');
+      cb.classList.remove('fade-out', 'hidden');
+
+      // 모든 선택지 클릭했으면 '다음' 버튼 보이기
+      if (clickedItems.size === totalItems) {
+        document.getElementById('next-button').classList.remove('hidden');
+      }
+    }
+
+    function setViewportSize() {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    window.addEventListener('resize', setViewportSize);
+    window.addEventListener('load', setViewportSize);
+
+    const wrapper = document.querySelector('.viewport-wrapper');
+    const ua = navigator.userAgent.toLowerCase();
+    wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
+
+    const dialogBox      = document.getElementById('dialog-box');
+    const locationLabel  = document.getElementById('location-label');
+    const choiceButtons  = document.getElementById('choice-buttons');
+    const roomImage      = document.getElementById('room-image');
+    const objectModal    = document.getElementById('object-modal');
+    const objectImage    = document.getElementById('object-image');
+    const objectDescText = document.getElementById('object-description-text');
+    const nextButton     = document.getElementById('next-button');
+
+    // 클릭된 아이템 기록용 Set, 전체 아이템 수
+    const clickedItems = new Set();
+    const itemData = {
+      "화이트 보드": {
+        description: "텅 비어있다. 곳곳에 지워진 흔적이 남아 있으나 중요한 내용으로는 보이지 않는다.",
+        image: "/images/greenboard.png",
+        acquirable: false
+      },
+      "수납형 TV": {
+        description: "반쯤 열린 문 사이로 잡음과 함께 아나운서의 목소리가 들린다. 할리우드 블록버스터 '어벤져스-에이지 오브 울트론'이 개봉 나흘 만에 300만명을 넘는 관객을 동원했습니다...... 이내 전원이 뚝, 하는 소리와 함께 나가버린다.",
+        image: "/images/chalk_eraser.png",
+        acquirable: false
+      },
+      "휴대폰 보관 가방": {
+        description: "아이폰 6, 갤럭시 a10, 옵티머스 GK 등 여러 기종의 휴대 전화가 꽂혀 있다. 번호는 40 번까지 있는 걸 확인할 수 있다. ",
+        image: "/images/table_chair.png",
+        acquirable: false
+      },
+      "빔 프로젝터": {
+        description: "정면이 아닌, 좌측으로 돌아가 쏘아지는 빛은 벽에 닿아 있다.",
+        image: "/images/attendance_book.png",
+        acquirable: false
+      }
+    };
+    const totalItems = Object.keys(itemData).length;
+
+    // 선택지 버튼 클릭
+    document.querySelectorAll('.choice-buttons button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.item;
+        const item = itemData[key];
+        if (!item) return;
+
+        // 클릭 기록
+        clickedItems.add(key);
+
+        // 선택지 숨기기
+        choiceButtons.classList.add('fade-out');
+        setTimeout(() => {
+          choiceButtons.classList.add('hidden');
+
+          // 모달 내용 설정
+          objectImage.src = item.image;
+          objectDescText.innerText = item.description;
+
+          // 모달 보여주기
+          objectModal.classList.remove('hidden');
+        }, 600);
+      });
+    });
+
+    // 모달 클릭하면 닫기
+    objectModal.addEventListener('click', () => {
+      closeObjectModal();
+    });
+
+    // Next 버튼 클릭 시 이동
+    nextButton.addEventListener('click', () => {
+      window.location.href = '/3-3';
+    });
+
+    // 대화 진행
+    let state = 0;
+    dialogBox.addEventListener('click', () => {
+      if (state === 0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(() => {
+          roomImage.src = '/images/classroom2.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        }, 600);
+        state++;
+      }
+    });
+  </script>
+</body>
+</html>

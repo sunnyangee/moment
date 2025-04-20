@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>내 진행 상태</title>
+  <link rel="stylesheet" th:href="@{/css/progress.css}" />
+</head>
+<body>
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <h2>안녕하세요, <span th:text="${#authentication.principal.username}">사용자</span>님!</h2>
+      <p>현재 진행 단계: <strong th:text="${progress.stage}">stage</strong></p>
+
+      <div class="progress-nav">
+        <!-- 최종 진행 페이지로 이동 -->
+        <a th:href="@{/${progress.stage}}"
+           class="btn btn-primary">
+          마지막으로 진행한 곳으로 이동
+        </a>
+      </div>
+
+      <div class="progress-nav">
+        <!-- 홈으로 돌아가기 -->
+        <a th:href="@{/home}"
+           class="btn btn-secondary">
+          홈으로 돌아가기
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
