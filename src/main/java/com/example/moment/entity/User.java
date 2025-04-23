@@ -16,6 +16,8 @@ public class User {
     private String password;
     private String nickname;
 
+    private int enabled;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "user_items", // 중간 테이블 이름
@@ -41,6 +43,10 @@ public class User {
 
     public String getUsername() { return username; }
 
+    public int getEnabled() {
+        return enabled;
+    }
+
     public void setUsername(String username) { this.username = username; }
 
     public String getPassword() { return password; }
@@ -54,4 +60,6 @@ public class User {
     public Set<Item> getItems() { return items; }
 
     public void setItems(Set<Item> items) { this.items = items; }
+
+    
 }
