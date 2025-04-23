@@ -2,29 +2,31 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>3-2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>화장실</title>
   <link rel="stylesheet" th:href="@{/css/home.css}" />
 </head>
 <body>
   <div class="viewport-wrapper">
     <div class="room-container">
-      <img id="room-image" src="/images/pastclassroom2.jpg" alt="방 이미지" class="room-image"/>
+      <img id="room-image" src="/images/toilet.jpg" alt="방 이미지" class="room-image"/>
 
-      <div id="location-label" class="location-label hidden">1F 3‑2</div>
+      <div id="location-label" class="location-label hidden">1F 화장실</div>
 
       <div class="ui-overlay">
         <!-- 1) 선택지 -->
         <div id="choice-buttons" class="choice-buttons hidden">
-          <button data-item="화이트 보드">화이트 보드</button>
-          <button data-item="수납형 TV">수납형 TV</button>
-          <button data-item="휴대폰 보관 가방">휴대폰 보관 가방</button>
-          <button data-item="빔 프로젝터">빔 프로젝터</button>
+          <button data-item="칸 1">칸 1</button>
+          <button data-item="칸 2">칸 2</button>
+          <button data-item="칸 3">칸 3</button>
+          <button data-item="칸 4">칸 4</button>
+          <button data-item="거울">거울</button>
+          <button data-item="세면대">세면대</button>
         </div>
 
         <!-- 2) 대화 박스 -->
         <div id="dialog-box" class="dialog-box">
-          <p id="dialog-text">깔끔한 분위기의 교실이다. 잡음이 심한 티비 소리가 들린다. </p>
+          <p id="dialog-text">은근 퀴퀴한 내음이 거부감을 들게 만든다. 구역질을 삼키고 내부를 둘러보면 화장실 칸과 세면대 밖에 없는 곳이다. </p>
           <div class="dialog-indicator">▼</div>
         </div>
 
@@ -97,10 +99,12 @@
 
     const clickedItems = new Set();
     const itemData = {
-      "화이트 보드":      { description: "텅 비어있다. 곳곳에 지워진 흔적이 남아 있으나 중요한 내용으로는 보이지 않는다.",                acquirable: false },
-      "수납형 TV":        { description: "반쯤 열린 문 사이로 잡음과 함께 아나운서의 목소리가 들린다. '할리우드 블록버스터 '어벤져스-에이지 오브 울트론'이 개봉 나흘 만에 300만명을 넘는 관객을 동원했습니다………….' 이내 뚝, 하는 소리와 함께 전원이 나가버린다.", acquirable: false },
-      "휴대폰 보관 가방":  { description: "아이폰 6, 갤럭시 a10, 옵티머스 GK 등 여러 기종의 휴대 전화가 꽂혀 있다. 번호는 40 번까지 있는 걸 확인할 수 있다. ",             acquirable: false },
-      "빔 프로젝터":      { description: "정면이 아닌, 좌측으로 돌아가 쏘아지는 빛은 벽에 닿아 있다.",            acquirable: false }
+      "칸 1":      { description: "내부에는 아무도 없다. 생활감이 다분한 이 곳에서 왜인지 서늘한 공기가 감돈다.",                acquirable: false },
+      "칸 2":      { description: "내부에는 아무도 없다. 생활감이 다분한 이 곳에서 왜인지 서늘한 공기가 감돈다.",                acquirable: false },
+      "칸 3":      { description: "내부에는 아무도 없다. 생활감이 다분한 이 곳에서 왜인지 서늘한 공기가 감돈다.",                acquirable: false },
+      "칸 4":      { description: "내부에는 아무도 없다. 생활감이 다분한 이 곳에서 왜인지 서늘한 공기가 감돈다.",                acquirable: false },
+      "거울":  { description: "거울을 바라보면 익숙하지만 조금은, 앳되어 보이는 얼굴이 보인다.",             acquirable: false },
+      "세면대":      { description: "단수가 된 건지 메마른 상태이다. 배수구 부분에 옅게 남은 갈색빛 자국이 눈에 들어오나 연식 때문인 것 같다.",            acquirable: false }
     };
     const totalItems = Object.keys(itemData).length;
 
@@ -133,7 +137,7 @@
       if (state === 0) {
         roomImage.classList.add('fade-out');
         setTimeout(() => {
-          roomImage.src = '/images/pastclassroom2.jpg';
+          roomImage.src = '/images/toilet.jpg';
           roomImage.classList.remove('fade-out');
           dialogBox.classList.add('hidden');
           choiceButtons.classList.remove('hidden');
@@ -159,7 +163,7 @@
     objectModal.querySelector('#object-description').addEventListener('click', closeObjectModal);
 
     nextButton.addEventListener('click', () => {
-      window.location.href = '/3-3';
+      window.location.href = '/audiovisualroom';
     });
   </script>
 </body>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>체육관</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/classroom1.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">별관 2F 체육관</div>
+
+      <div class="ui-overlay">
+        <!-- 1차 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="체육 창고">체육 창고</button>
+          <button data-item="간이 방송실">간이 방송실</button>
+          <button data-item="배구 네트">배구 네트</button>
+          <button data-item="공 바구니">공 바구니</button>
+          <button data-item="강당 무대">강당 무대</button>
+          <button data-item="쌓인 매트">쌓인 매트</button>
+          <button data-item="농구 골대">농구 골대</button>
+          <button data-item="계단">계단</button>
+        </div>
+
+        <!-- 2차 선택지 -->
+        <div id="paper-choice-buttons" class="choice-buttons hidden">
+          <button data-action="storagebox">보관함</button>
+          <button data-action="mop">기름 걸레</button>
+          <button data-action="jumprope">줄넘기 더미</button>
+        </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">체육 창고와 간이 방송실이 보인다. 중앙에는 배구 네트가 세워져 있고 구석에는 공 바구니가 보인다.  </p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <!-- 설명 모델 -->
+        <div id="object-modal" class="object-modal hidden">
+          <button class="close-button" onclick="closeObjectModal()">X</button>
+          <div id="object-description" class="dialog-box">
+            <p id="object-description-text"></p>
+            <div class="dialog-indicator">▼</div>
+          </div>
+        </div>
+
+        <!-- 획득 확인 모델 -->
+        <div id="confirm-acquire-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
+            <button id="btn-acquire-ok">확인</button>
+            <button id="btn-acquire-cancel">취소</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="inventory-button" onclick="toggleInventory()">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <button class="close-button" onclick="toggleInventory()">X</button>
+        <h3>인벤토리</h3>
+        <ul id="inventory-list"></ul>
+      </div>
+
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        const ul = document.getElementById('inventory-list');
+        ul.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          ul.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+
+    loadInventory();
+
+    function toggleInventory() {
+      document.getElementById('inventory-modal').classList.toggle('hidden');
+    }
+
+    function closeObjectModal() {
+      document.getElementById('object-modal').classList.add('hidden');
+      document.getElementById('confirm-acquire-modal').classList.add('hidden');
+      paperChoiceButtons.classList.add('hidden');
+      choiceButtons.classList.remove('fade-out', 'hidden');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size === totalItems) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+
+    const choiceButtons = document.getElementById('choice-buttons');
+    const paperChoiceButtons = document.getElementById('paper-choice-buttons');
+    const dialogBox = document.getElementById('dialog-box');
+    const locationLabel = document.getElementById('location-label');
+    const roomImage = document.getElementById('room-image');
+    const objectModal = document.getElementById('object-modal');
+    const objectDescText = document.getElementById('object-description-text');
+    const nextButton = document.getElementById('next-button');
+    const inventoryModal = document.getElementById('inventory-modal');
+    const inventoryList = document.getElementById('inventory-list');
+    const confirmModal = document.getElementById('confirm-acquire-modal');
+    const confirmText = document.getElementById('confirm-acquire-text');
+    const btnOk = document.getElementById('btn-acquire-ok');
+    const btnCancel = document.getElementById('btn-acquire-cancel');
+
+    const clickedItems = new Set();
+    let currentItem = null;
+
+    const wrapper = document.querySelector('.viewport-wrapper');
+    const ua = navigator.userAgent.toLowerCase();
+    wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
+
+    const itemData = {
+      "체육 창고": {
+        description: "들어가 보면 여러 물건이 있다.",
+        acquirable: false
+      },
+      "간이 방송실": {
+        description: "단상 위에 낡은 스탠드 마이크가 세워져 있으며, 전기가 나간 건지 전원은 들어오지 않는다.",
+        acquirable: false
+      },
+      "배구 네트": {
+        description: "녹이 슨 지지대가 네트를 비스듬하게 걸치고 있고, 자세히 살펴보면…… 오른쪽 기둥 아래 무언가가 적혀 있다. \n CODE: QBN4163",
+        acquirable: false
+      },
+      "공 바구니": {
+        description: "바람이 빠져 물렁물렁한 농구공이 가득 쌓여있다.",
+        acquirable: false
+      },
+      "강당 무대": {
+        description: "무대 구석에 댄스부의 무대 의상이었던 것으로 추정되는 재킷이 무더기로 쌓여 있다.",
+        acquirable: false
+      },
+      "쌓인 매트": {
+        description: "짙은 파란색의 매트가 여러 개 겹쳐 있다. 사이에 무언가 낀 듯이 중앙이 불룩하게 솟았다,",
+        acquirable: false
+      },
+      "농구 골대": {
+        description: "하얀색 페인트칠이 된 사다리형 농구 골대이며, 하부에 긁어 새긴 듯한 글자가 있다.",
+        acquirable: false
+      },
+      "계단": {
+        description: "체육관의 2 층으로 올라갈 수 있는 문이다. 이동하기 위해선 국문 키패드를 입력해야 한다.",
+        acquirable: false
+      }
+    };
+
+    const totalItems = Object.keys(itemData).length;
+    let state = 0;
+
+    dialogBox.addEventListener('click', () => {
+      if (state === 0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(() => {
+          roomImage.src = '/images/classroom2.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        }, 600);
+        state++;
+      }
+    });
+
+    document.querySelectorAll('#choice-buttons button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.item;
+        const info = itemData[key];
+        if (!info) return;
+        clickedItems.add(key);
+        currentItem = info;
+
+        if (key === "체육 창고") {
+          choiceButtons.classList.add('fade-out');
+          setTimeout(() => {
+            choiceButtons.classList.add('hidden');
+            paperChoiceButtons.classList.remove('hidden');
+          }, 600);
+          return;
+        }
+
+        choiceButtons.classList.add('fade-out');
+        setTimeout(() => {
+          choiceButtons.classList.add('hidden');
+          objectDescText.innerText = info.description;
+          objectModal.classList.remove('hidden');
+        }, 600);
+      });
+    });
+
+    paperChoiceButtons.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        paperChoiceButtons.classList.add('hidden');
+        const action = btn.dataset.action;
+
+        if (action === 'storagebox') {
+          objectDescText.innerText = "배드민턴채와 탁구채가 한가득이다. 한쪽에 플라스틱 케이스에 담긴 셔틀콕과 탁구공도 볼 수 있다.";
+        } else if (action === 'mop') {
+          objectDescText.innerText = "미묘하게 불쾌한 냄새가 난다. 뭉친 먼지들 사이로 배드민턴 셔틀콕 하나가 박혀 있다.";
+        } else if (action == 'jumprope') {
+          objectDescText.innerText = "정돈되지 않아 엉킨 더미다. 시도한다면 충분히 풀 순 있겠으나…… 굳이?";
+        }
+
+        objectModal.classList.remove('hidden');
+      });
+    });
+
+    objectModal.addEventListener('click', () => {
+      if (!currentItem || !currentItem.acquirable) {
+        return closeObjectModal();
+      }
+      confirmModal.dataset.pendingKey = currentItem.dbKey;
+      confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+      confirmModal.classList.remove('hidden');
+    });
+
+    btnOk.addEventListener('click', async () => {
+      const key = confirmModal.dataset.pendingKey;
+      closeObjectModal();
+      let json = { success: false };
+      try {
+        const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, {
+          method: 'POST'
+        });
+        json = await resp.json();
+      } catch {}
+      if (json.success) {
+        await loadInventory();
+      } else {
+        alert(json.message);
+      }
+    });
+
+    btnCancel.addEventListener('click', closeObjectModal);
+
+    nextButton.addEventListener('click', () => {
+      window.location.href = '/gym2f';
+    });
+  </script>
+</body>
+</html>

@@ -1,23 +1,20 @@
-// src/main/java/com/example/moment/config/SecurityConfig.java
 package com.example.moment.config;
 
 import com.example.moment.entity.Progress;
-import com.example.moment.service.ProgressService;
 import com.example.moment.service.CustomUserDetailsService;
+import com.example.moment.service.ProgressService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.config.http.SessionCreationPolicy;
-
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 public class SecurityConfig {
@@ -25,9 +22,9 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final ProgressService progressService;
 
-    public SecurityConfig(CustomUserDetailsService customUserDetailsService,
+    public SecurityConfig(CustomUserDetailsService uds,
                           ProgressService progressService) {
-        this.customUserDetailsService = customUserDetailsService;
+        this.customUserDetailsService = uds;
         this.progressService = progressService;
     }
 
@@ -47,59 +44,63 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-          // 1) CSRF 비활성화
+          // CSRF 끄고
           .csrf(csrf -> csrf.disable())
-          // 2) URL 권한 설정
+
+          // 리소스별 권한
           .authorizeHttpRequests(auth -> auth
-              .requestMatchers("/login", "/css/**", "/js/**", "/images/**", "/error").permitAll()
-              .requestMatchers("/progress/**").hasRole("USER")
-              .requestMatchers("/home").hasRole("USER")
-              .anyRequest().authenticated()
+            .requestMatchers(
+              "/login",
+              "/css/**", "/js/**", "/images/**",
+              "/error"
+            ).permitAll()
+            .requestMatchers("/home").hasRole("USER")
+            .requestMatchers("/progress/**").hasRole("USER")
+            .anyRequest().authenticated()
           )
-          // 3) 로그인 폼 & 성공 핸들러
+
+          // 로그인 페이지 & 동적 성공 핸들러
           .formLogin(form -> form
-              .loginPage("/login")
-              // 로그인 성공하면 progress 존재 여부로 리다이렉트 분기
-              .successHandler(authenticationSuccessHandler())
-              .permitAll()
+            .loginPage("/login")
+            .successHandler(authenticationSuccessHandler())
+            .permitAll()
           )
-          // 4) 로그아웃
+
+          // 로그아웃
           .logout(logout -> logout.permitAll())
-          // 5) 세션 관리
+
+          // 세션 관리
           .sessionManagement(sess -> sess
-              .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-              .maximumSessions(1)
-              .expiredUrl("/login?expired=true")
+            .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            .maximumSessions(1)
+            .expiredUrl("/login?expired=true")
           )
-          // 6) 인증 프로바이더
+
+          // DAO 프로바이더
           .authenticationProvider(authenticationProvider());
 
         return http.build();
     }
 
     /**
-     * 로그인 성공 후 호출됩니다.
-     * ProgressService 에서 현재 유저의 진행정보를 꺼내 와서
-     * stage 가 "start"(또는 아직 기록이 없다면)면 /home,
-     * 그 외엔 /progress 로 보냅니다.
+     * 로그인 성공 시:
+     * - stage == "start" 이면 /home
+     * - 그 외면 /progress
      */
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
-        return new AuthenticationSuccessHandler() {
-            @Override
-            public void onAuthenticationSuccess(
-                    HttpServletRequest request,
-                    HttpServletResponse response,
-                    Authentication authentication
-            ) throws java.io.IOException {
-                UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-                Progress prog = progressService.findByUser(principal.getUser());
-                if (prog == null || "start".equals(prog.getStage())) {
-                    response.sendRedirect("/home");
-                } else {
-                    response.sendRedirect("/progress");
-                }
-            }
+        return (HttpServletRequest req,
+                HttpServletResponse res,
+                Authentication auth) -> {
+
+            UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
+            Progress prog = progressService.findByUser(principal.getUser());
+
+            String target = "start".equals(prog.getStage())
+                          ? "/home"
+                          : "/progress";
+
+            res.sendRedirect(req.getContextPath() + target);
         };
     }
 }

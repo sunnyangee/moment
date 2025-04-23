@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>체육관 2 층</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+    <!-- 키패드 입력 모달 -->
+  <div id="keypad-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3>체육관 2 층으로 이동하기 위해서는 국문 키패드를 입력해야 한다.</h3>
+      <input type="text" id="keypad-input" placeholder="국문 입력" maxlength="6"/>
+      <button id="keypad-submit">확인</button>
+    </div>
+  </div>
+  
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/classroom1.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">별관 2F 체육관(2 층)</div>
+
+      <div class="ui-overlay">
+        <!-- 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="객석">객석</button>
+          <button data-item="창문 난간">창문 난간</button>
+        </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">체육관 2 층으로 이동하기 위해서는 국문 키패드를 입력해야 한다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <!-- 설명 모달 -->
+        <div id="object-modal" class="object-modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">×</button>
+            <div class="dialog-box">
+              <p id="object-description-text"></p>
+              <div class="dialog-indicator">▼</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <button class="close-button">×</button>
+          <h3>인벤토리</h3>
+          <ul id="inventory-list"></ul>
+        </div>
+      </div>
+
+      <!-- NEXT 버튼 -->
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    function setViewportSize() {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    }
+    window.addEventListener('resize', setViewportSize);
+    window.addEventListener('load', setViewportSize);
+
+    const wrapper        = document.querySelector('.viewport-wrapper');
+    const ua             = navigator.userAgent.toLowerCase();
+    const dialogBox      = document.getElementById('dialog-box');
+    const locationLabel  = document.getElementById('location-label');
+    const choiceButtons  = document.getElementById('choice-buttons');
+    const roomImage      = document.getElementById('room-image');
+    const objectModal    = document.getElementById('object-modal');
+    const objectDescText = document.getElementById('object-description-text');
+    const nextButton     = document.getElementById('next-button');
+    const inventoryBtn   = document.querySelector('.inventory-button');
+    const inventoryModal = document.getElementById('inventory-modal');
+    const inventoryList  = document.getElementById('inventory-list');
+
+    wrapper.classList.add(
+      /android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os'
+    );
+
+    const clickedItems = new Set();
+    const itemData = {
+      "객석":   { description: "플라스틱 재질의 의자가 줄지어 늘어져 있다. 체육관 1층이 훤히 보인다.", acquirable: false },
+      "창문 난간": { description: "난간 위 일렬로 놓인 화분의 절반은 싱싱하고, 절반은 죽어 있다. ", acquirable: false }
+    };
+    const totalItems = Object.keys(itemData).length;
+
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        inventoryList.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          inventoryList.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+    loadInventory();
+
+    function toggleInventory() {
+      inventoryModal.classList.toggle('hidden');
+    }
+    inventoryBtn.addEventListener('click', toggleInventory);
+    inventoryModal.querySelector('.close-button').addEventListener('click', toggleInventory);
+    inventoryModal.querySelector('.modal-backdrop').addEventListener('click', toggleInventory);
+
+    function showObjectModal(text) {
+      choiceButtons.classList.add('fade-out');
+      setTimeout(() => {
+        choiceButtons.classList.add('hidden');
+        objectDescText.innerText = text;
+        objectModal.classList.remove('hidden');
+      }, 600);
+    }
+
+    function closeObjectModal() {
+      objectModal.classList.add('hidden');
+      choiceButtons.classList.remove('hidden','fade-out');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size >= totalItems) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+
+    objectModal.querySelector('.modal-backdrop').addEventListener('click', closeObjectModal);
+    objectModal.querySelector('.close-button').addEventListener('click', closeObjectModal);
+    objectModal.querySelector('.modal-content').addEventListener('click', closeObjectModal);
+
+    choiceButtons.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.item;
+        const item = itemData[key];
+        if (!item) return;
+        clickedItems.add(key);
+        showObjectModal(item.description);
+      });
+    });
+
+    nextButton.addEventListener('click', () => {
+      window.location.href = '/clubroom4';
+    });
+
+    let state = 0;
+    dialogBox.addEventListener('click', () => {
+      if (state === 0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(() => {
+          roomImage.src = '/images/classroom2.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        }, 600);
+        state++;
+      }
+    });
+
+    // 키패드 모달 요소
+    const keypadModal  = document.getElementById('keypad-modal');
+    const keypadInput  = document.getElementById('keypad-input');
+    const keypadSubmit = document.getElementById('keypad-submit');
+
+    // 정답 (예: "1024")
+    const keypadAnswer = "사월의 반복";
+
+    // 처음 로딩되면 키패드 모달 보이기
+    window.addEventListener('DOMContentLoaded', () => {
+    keypadModal.classList.remove('hidden');
+    dialogBox.classList.add('hidden');
+    });
+
+    // 제출 버튼 클릭
+    keypadSubmit.addEventListener('click', () => {
+    const input = keypadInput.value.trim();
+    if (input === keypadAnswer) {
+        keypadModal.classList.add('hidden');
+        dialogBox.querySelector('#dialog-text').innerText = "객석과 창문 난간을 살필 수 있다.";
+        dialogBox.classList.remove('hidden');
+    } else {
+        alert("키패드 입력이 틀렸습니다.");
+        keypadInput.value = "";
+    }
+    });
+
+  </script>
+</body>
+</html>

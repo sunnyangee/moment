@@ -3,7 +3,6 @@ package com.example.moment.entity;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
-import com.example.moment.domain.Item;
 
 @Entity
 @Table(name = "user")

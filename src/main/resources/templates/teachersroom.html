@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>교무실</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <!-- 키패드 입력 모달 -->
+  <div id="keypad-modal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3>숫자 키패드 입력</h3>
+      <input type="text" id="keypad-input" placeholder="숫자 입력" maxlength="9"/>
+      <button id="keypad-submit">확인</button>
+    </div>
+  </div>
+
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/classroom1.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">2F 교무실</div>
+
+      <div class="ui-overlay">
+        <!-- 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="자료 보관 캐비넷">자료 보관 캐비넷</button>
+          <button data-item="과학 선생님 테이블">과학 선생님 테이블</button>
+          <button data-item="서랍장">서랍장</button>
+        </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box hidden">
+          <p id="dialog-text">교무실로 이동합니다...</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <!-- 설명 모달 -->
+        <div id="object-modal" class="object-modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">×</button>
+            <div class="dialog-box">
+              <p id="object-description-text"></p>
+              <div class="dialog-indicator">▼</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 획득 확인 모달 -->
+        <div id="confirm-acquire-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
+            <button id="btn-acquire-ok">확인</button>
+            <button id="btn-acquire-cancel">취소</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button" onclick="toggleInventory()">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <div class="modal-backdrop" onclick="toggleInventory()"></div>
+        <div class="modal-content">
+          <button class="close-button" onclick="toggleInventory()">×</button>
+          <h3>인벤토리</h3>
+          <ul id="inventory-list"></ul>
+        </div>
+      </div>
+
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    function setViewportSize() {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    }
+    window.addEventListener('resize', setViewportSize);
+    window.addEventListener('load', () => {
+      setViewportSize();
+      loadInventory();
+    });
+
+    const wrapper        = document.querySelector('.viewport-wrapper');
+    const ua             = navigator.userAgent.toLowerCase();
+    wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
+
+    const dialogBox       = document.getElementById('dialog-box');
+    const locationLabel   = document.getElementById('location-label');
+    const choiceButtons   = document.getElementById('choice-buttons');
+    const roomImage       = document.getElementById('room-image');
+    const objectModal     = document.getElementById('object-modal');
+    const objectDescText  = document.getElementById('object-description-text');
+    const confirmModal    = document.getElementById('confirm-acquire-modal');
+    const confirmText     = document.getElementById('confirm-acquire-text');
+    const btnOk           = document.getElementById('btn-acquire-ok');
+    const btnCancel       = document.getElementById('btn-acquire-cancel');
+    const inventoryBtn    = document.querySelector('.inventory-button');
+    const inventoryModal  = document.getElementById('inventory-modal');
+    const inventoryList   = document.getElementById('inventory-list');
+    const nextButton      = document.getElementById('next-button');
+
+    const clickedItems = new Set();
+    let currentItem = null;
+
+    const itemData = {
+      "자료 보관 캐비넷": {
+        dbKey: "1996 년도 졸업 앨범",
+        description: "각종 수업 자료와 교내 제작 서적, 졸업앨범이 연도별로 정리되어 있다. 1990년도부터 2023년까지 해당한다.",
+        acquirable: true
+      },
+      "과학 선생님 테이블": {
+        dbKey: "과학실 열쇠",
+        description: "주기율표를 배경 화면으로 설정한 모니터 옆 가림막에 어금니 키링이 달린 열쇠가 달려 있다. 마우스와 키보드가 없어 컴퓨터는 사용할 수 없다.",
+        acquirable: true
+      },
+      "서랍장": {
+        description: "아이들에게 압수한 물건들이 잔뜩 들어있는 서랍장이다. 시디플레이어, 페이스 파우더 등이 주를 이루고 있다.",
+        acquirable: false
+      }
+    };
+
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        inventoryList.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          inventoryList.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+
+    function toggleInventory() {
+      inventoryModal.classList.toggle('hidden');
+    }
+
+    function showObjectModal(text) {
+      choiceButtons.classList.add('fade-out');
+      setTimeout(() => {
+        choiceButtons.classList.add('hidden');
+        objectDescText.innerText = text;
+        objectModal.classList.remove('hidden');
+      }, 600);
+    }
+
+    function closeObjectModal() {
+      objectModal.classList.add('hidden');
+      confirmModal.classList.add('hidden');
+      choiceButtons.classList.remove('fade-out', 'hidden');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size >= Object.keys(itemData).length) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+
+    // 모달 이벤트 바인딩
+    objectModal.querySelector('.modal-backdrop').addEventListener('click', closeObjectModal);
+    objectModal.querySelector('.close-button').addEventListener('click', closeObjectModal);
+    confirmModal.querySelector('.modal-backdrop').addEventListener('click', closeObjectModal);
+    confirmModal.querySelector('.close-button').addEventListener('click', closeObjectModal);
+    confirmModal.querySelector('.modal-content').addEventListener('click', e => e.stopPropagation());
+
+    choiceButtons.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.item;
+        const item = itemData[key];
+        if (!item) return;
+        clickedItems.add(key);
+        currentItem = item;
+        showObjectModal(item.description);
+      });
+    });
+
+    document.querySelector('#object-description-text').addEventListener('click', () => {
+      if (!currentItem || !currentItem.acquirable) return closeObjectModal();
+      confirmModal.dataset.pendingKey = currentItem.dbKey;
+      confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+      confirmModal.classList.remove('hidden');
+    });
+
+    btnOk.addEventListener('click', async () => {
+      const key = confirmModal.dataset.pendingKey;
+      closeObjectModal();
+      try {
+        const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, {
+          method: 'POST'
+        });
+        const json = await resp.json();
+        if (json.success) {
+          await loadInventory();
+        } else {
+          alert(json.message);
+        }
+      } catch {
+        alert("아이템 획득에 실패했습니다.");
+      }
+    });
+
+    btnCancel.addEventListener('click', closeObjectModal);
+
+    // NEXT 버튼 이동
+    nextButton.addEventListener('click', () => {
+      window.location.href = '/computerroom';
+    });
+
+    // 키패드 입력 기능
+    const keypadModal  = document.getElementById('keypad-modal');
+    const keypadInput  = document.getElementById('keypad-input');
+    const keypadSubmit = document.getElementById('keypad-submit');
+    const keypadAnswer = "912534768";
+
+    window.addEventListener('DOMContentLoaded', () => {
+      keypadModal.classList.remove('hidden');
+    });
+
+    keypadSubmit.addEventListener('click', () => {
+      const input = keypadInput.value.trim();
+      if (input === keypadAnswer) {
+        keypadModal.classList.add('hidden');
+        dialogBox.classList.remove('hidden');
+        dialogBox.querySelector('#dialog-text').textContent = "교무실로 이동합니다...";
+      } else {
+        alert("키패드 입력이 틀렸습니다.");
+        keypadInput.value = "";
+      }
+    });
+
+    keypadInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') keypadSubmit.click();
+    });
+
+    dialogBox.addEventListener('click', () => {
+      dialogBox.classList.add('hidden');
+      dialogBox.classList.remove('fade-in');
+      roomImage.classList.add('fade-out');
+      setTimeout(() => {
+        roomImage.src = '/images/classroom2.jpg';
+        roomImage.classList.remove('fade-out');
+        choiceButtons.classList.remove('hidden');
+        locationLabel.classList.remove('hidden');
+      }, 600);
+    });
+  </script>
+</body>
+</html>

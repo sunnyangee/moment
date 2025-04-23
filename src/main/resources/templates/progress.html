@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>내 진행 상태</title>
   <link rel="stylesheet" th:href="@{/css/progress.css}" />
 </head>
@@ -14,9 +14,9 @@
 
       <div class="progress-nav">
         <!-- 최종 진행 페이지로 이동 -->
-        <a th:href="@{/${progress.stage}}"
-           class="btn btn-primary">
-          마지막으로 진행한 곳으로 이동
+        <a th:href="@{/{stage}(stage=${progress.stage})}"
+            class="btn btn-primary">
+            마지막으로 진행한 곳으로 이동
         </a>
       </div>
 
@@ -24,7 +24,7 @@
         <!-- 홈으로 돌아가기 -->
         <a th:href="@{/home}"
            class="btn btn-secondary">
-          홈으로 돌아가기
+          처음부터 시작
         </a>
       </div>
     </div>

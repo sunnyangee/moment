@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>음악실</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/classroom1.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">3F 음악실</div>
+
+      <div class="ui-overlay">
+        <!-- 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="피아노">피아노</button>
+          <button data-item="악기 보관함">악기 보관함</button>
+          <button data-item="지휘봉">지휘봉</button>
+          <button data-item="하드 케이스">하드 케이스</button>
+          <button data-item="유선 스피커">유선 스피커</button>
+          <button data-item="악보 1">악보 1</button>
+          <button data-item="악보 2">악보 2</button>
+        </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">중앙에 거대한 피아노가 놓여 있다. 방음벽 대신 악기보관함과 보면대가 보인다. 공간의 소리가 울린다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <!-- 설명 모달 -->
+        <div id="object-modal" class="object-modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">×</button>
+            <div class="dialog-box">
+              <p id="object-description-text"></p>
+              <div class="dialog-indicator">▼</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 획득 확인 모달 -->
+        <div id="confirm-acquire-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">×</button>
+            <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
+            <button id="btn-acquire-ok">확인</button>
+            <button id="btn-acquire-cancel">취소</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button" onclick="toggleInventory()">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <div class="modal-backdrop" onclick="toggleInventory()"></div>
+        <div class="modal-content">
+          <button class="close-button" onclick="toggleInventory()">×</button>
+          <h3>인벤토리</h3>
+          <ul id="inventory-list"></ul>
+        </div>
+      </div>
+
+      <!-- NEXT -->
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        const ul = document.getElementById('inventory-list');
+        ul.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          ul.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+
+    loadInventory();
+
+    function setViewportSize() {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    }
+    window.addEventListener('resize', setViewportSize);
+    window.addEventListener('load', setViewportSize);
+
+    const choiceButtons = document.getElementById('choice-buttons');
+    const dialogBox = document.getElementById('dialog-box');
+    const roomImage = document.getElementById('room-image');
+    const locationLabel = document.getElementById('location-label');
+    const objectModal = document.getElementById('object-modal');
+    const objectDescText = document.getElementById('object-description-text');
+    const confirmModal = document.getElementById('confirm-acquire-modal');
+    const confirmText = document.getElementById('confirm-acquire-text');
+    const btnOk = document.getElementById('btn-acquire-ok');
+    const btnCancel = document.getElementById('btn-acquire-cancel');
+    const inventoryModal = document.getElementById('inventory-modal');
+    const inventoryList = document.getElementById('inventory-list');
+    const nextButton = document.getElementById('next-button');
+
+    const wrapper = document.querySelector('.viewport-wrapper');
+    wrapper.classList.add(/android|iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) ? 'mobile-os' : 'desktop-os');
+
+    const clickedItems = new Set();
+    let currentItem = null;
+
+    const itemData = {
+      "피아노":        {description: "낡은 그랜드 피아노, 발판이 고장나 덜컹거린다. 건반이 몇 개 빠진 피아노의 악보 보면대에 휘갈겨 적은 단면의 악보가 자리해 있다. \n\nhigh C - Eb - G# - C# - high E - E - high A - Eb - high D - Bb - high D - E♭ - high C - F# - C# - G# - G#  ", acquirable: false },
+      "악기 보관함": {description: "단소, 리코더, 우쿨렐레 등이 들어 있다. 수행평가 단골 악기들이다.", acquirable: false },
+      "지휘봉":     { description: "목재 손잡이로 된 14인치 지휘봉이다. 습기를 머금어 변색된 부분이 갈라졌다.", acquirable: false },
+      "하드 케이스":        { description: "고급진 음각이 새겨진 월넛 하드 케이스다.  ", acquirable: false },
+      "유선 스피커":        { description: "재생 버튼에 불이 들어와 있다, 갑자기 깜빡, 점멸하더니 듣기 좋은 미성이 알 수 없는 내용을 읊기 시작한다. 슈베르트의 '마왕'의 스토리 라인을 해석한 유튜브 영상인 것 같다. '아버지가 뒤에 탄 아이를 안아들어 숨을 확인했을 때, 그땐 이미 늦어 있었고…………' ", acquirable: false },
+      "악보 1":          { dbKey: "악보 1", description: "라흐마니노프의 '죽음의 섬' 악보가 놓여 있다. 악보 중앙을 크게 차지한 십자가 낙서도 보인다. ", acquirable: true },
+      "악보 2":        { description: "알렉산드르 스크랴빈의 '소나타 9번' 악보가 놓여 있다. 특이점이 있다면, 마지막 장의 마지막 줄을 도돌이표로 마친다는 것이다.", acquirable: false },
+    };
+
+    window.toggleInventory = () => inventoryModal.classList.toggle('hidden');
+
+    function showObjectModal(text) {
+      choiceButtons.classList.add('fade-out');
+      setTimeout(() => {
+        choiceButtons.classList.add('hidden');
+        objectDescText.innerText = text;
+        objectModal.classList.remove('hidden');
+      }, 600);
+    }
+
+    function closeObjectModal() {
+      objectModal.classList.add('hidden');
+      confirmModal.classList.add('hidden');
+      choiceButtons.classList.remove('hidden', 'fade-out');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      const totalButtons = [...choiceButtons.querySelectorAll('button')].length;
+      if (clickedItems.size >= totalButtons) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+
+    document.querySelectorAll('#object-modal .modal-backdrop, #object-modal .close-button')
+      .forEach(el => el.addEventListener('click', closeObjectModal));
+    document.querySelector('#object-modal .modal-content')
+      .addEventListener('click', e => e.stopPropagation());
+
+    document.querySelectorAll('#confirm-acquire-modal .modal-backdrop, #confirm-acquire-modal .close-button')
+      .forEach(el => el.addEventListener('click', closeConfirmModal));
+    document.querySelector('#confirm-acquire-modal .modal-content')
+      .addEventListener('click', e => e.stopPropagation());
+    btnCancel.addEventListener('click', closeConfirmModal);
+
+    function closeConfirmModal() {
+      confirmModal.classList.add('hidden');
+      closeObjectModal();
+    }
+
+    choiceButtons.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const label = btn.dataset.item;
+        const cleanedLabel = label.replaceAll('\u00A0', ' ').trim();
+        clickedItems.add(cleanedLabel);
+
+        if (cleanedLabel === "약 수납장"
+          && ![...inventoryList.children].some(li => li.querySelector('strong')?.textContent === "약 수납장 열쇠")) {
+          return alert("약 수납장 열쇠가 없습니다!");
+        }
+
+        currentItem = itemData[cleanedLabel] || null;
+        if (cleanedLabel === "약 수납장") {
+          currentItem = itemData["진통제"];
+          try {
+            await fetch(`/api/items/consume?key=${encodeURIComponent("약 수납장 열쇠")}`, {
+              method: 'DELETE'
+            });
+            await loadInventory();
+          } catch (e) {
+            console.error("열쇠 삭제 실패", e);
+          }
+        }
+
+        showObjectModal(currentItem.description);
+      });
+    });
+
+    document.querySelector('#object-modal .dialog-box').addEventListener('click', () => {
+      if (!currentItem || !currentItem.acquirable) {
+        return closeObjectModal();
+      }
+      confirmModal.dataset.pendingKey = currentItem.dbKey;
+      confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+      confirmModal.classList.remove('hidden');
+    });
+
+    btnOk.addEventListener('click', async () => {
+      const key = confirmModal.dataset.pendingKey;
+      closeConfirmModal();
+
+      let json = { success: false, message: "획득에 실패했습니다." };
+      try {
+        const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, { method: 'POST' });
+        json = await resp.json();
+      } catch {}
+
+      if (json.success) {
+        await loadInventory();
+      } else {
+        alert(json.message);
+      }
+
+      closeObjectModal();
+    });
+
+    let state = 0;
+    dialogBox.addEventListener('click', () => {
+      if (state === 0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(() => {
+          roomImage.src = '/images/classroom2.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        }, 600);
+        state = 1;
+      }
+    });
+
+    nextButton.addEventListener('click', () => window.location.href = '/conveniencestore');
+  });
+  </script>
+</body>
+</html>

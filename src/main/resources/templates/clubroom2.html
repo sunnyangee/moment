@@ -2,39 +2,38 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>3-3</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>댄스부실</title>
   <link rel="stylesheet" th:href="@{/css/home.css}" />
 </head>
 <body>
   <div class="viewport-wrapper">
     <div class="room-container">
       <img id="room-image" src="/images/classroom2.jpg" alt="방 이미지" class="room-image"/>
-      <div id="location-label" class="location-label hidden">1F 3‑3</div>
+
+      <div id="location-label" class="location-label hidden">2F 댄스부실</div>
 
       <div class="ui-overlay">
         <div id="choice-buttons" class="choice-buttons hidden">
-          <button data-item="전자 칠판">전자 칠판</button>
-          <button data-item="일체형 흰색 철제 책걸상">일체형 흰색 철제 책걸상</button>
-          <button data-item="개인용 터치패드">개인용 터치패드</button>
-          <button data-item="사물함">사물함</button>
-          <button data-item="청소도구함">청소도구함</button>
+          <button data-item="스피커">스피커</button>
+          <button data-item="침낭">침낭</button>
+          <button data-item="벽면 거울">벽면 거울</button>
         </div>
 
         <div id="paper-choice-buttons" class="choice-buttons hidden">
-          <button data-action="examine">구겨진 종이를 자세히 본다</button>
-          <button data-action="ignore">보지 않고 넘어간다</button>
+          <button data-action="examine">자세히 본다</button>
         </div>
 
         <div id="dialog-box" class="dialog-box">
-          <p id="dialog-text">파스텔 톤의 가구와 전자기기가 즐비한 교실이다. 온통 최신식인 것 같다.</p>
+          <p id="dialog-text">물건이나 가구가 별로 없이 트인 공간이다. 앞쪽 바닥에 밝은 노란색 테이프가 한뼘 크기로 붙어 있다.
+          </p>
           <div class="dialog-indicator">▼</div>
         </div>
 
         <div id="object-modal" class="object-modal hidden">
           <div class="modal-backdrop"></div>
           <div class="modal-content">
-            <button class="close-button">×</button>
+            <button class="close-button">&times;</button>
             <div class="dialog-box">
               <p id="object-description-text"></p>
               <div class="dialog-indicator">▼</div>
@@ -45,7 +44,7 @@
         <div id="confirm-acquire-modal" class="modal hidden">
           <div class="modal-backdrop"></div>
           <div class="modal-content">
-            <button class="close-button">×</button>
+            <button class="close-button">&times;</button>
             <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
             <button id="btn-acquire-ok">확인</button>
             <button id="btn-acquire-cancel">취소</button>
@@ -59,7 +58,7 @@
       <div id="inventory-modal" class="inventory-modal hidden">
         <div class="modal-backdrop" onclick="toggleInventory()"></div>
         <div class="modal-content">
-          <button class="close-button" onclick="toggleInventory()">×</button>
+          <button class="close-button" onclick="toggleInventory()">&times;</button>
           <h3>인벤토리</h3>
           <ul id="inventory-list"></ul>
         </div>
@@ -117,14 +116,20 @@
       const ua = navigator.userAgent.toLowerCase();
       wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
 
-
-
       const itemData = {
-        "전자 칠판": { description: "딱 떨어지지 않는 값이 화면의 끝까지 적혀 있다. 3.141592653589793238462643383279502……" },
-        "일체형 흰색 철제 책걸상": { description: "20개 남짓한 책걸상이 열 맞춰 놓여 있다. 눈에 보이는 서랍 안에는 2024년 6월 모의고사 시험지가 구겨져 있다. 국어 영역인듯 한데 문제 해석보다 낙서가 더 많은 것 같다." },
-        "개인용 터치패드": { description: "잠금이 걸려 있는 기기는 기말고사 시간표가 잠금 화면으로 설정되어 있다." },
-        "사물함": { dbKey: "종이 몇 장", description: "열려 있는 사물함 칸에는 말끔한 L자 파일과 그 안 종이 몇 장이 들어 있다.", acquirable: true },
-        "청소도구함": { dbKey: "구겨진 종이", description: "도구함을 여는 순간, 눅눅하게 젖은 대걸레와 빗자루 두 개, 쓰레받기 두 개가 몸으로 떨어진다. 쏟아져나오는 쓰레기들 사이 처참히 구겨진 종이가 눈에 띈다.", acquirable: true }
+        "스피커": {
+          description: " 'Marshall' 사 아이보리 컬러 중형 스피커다. 그 옆에 '부원 외 작동 금지'라는 주의 문구가 부착되어 있다.",
+          acquirable: false
+        },
+        "침낭": {
+          description: "누군가가 사용하던 침낭, 구김이 많이 간 채로 바닥에 덩그러니 놓여 있다. 온기는 한 점 남아있지 않지만, 안쪽에 무언가가 보인다.",
+          acquirable: false
+        },
+        "벽면 거울": {
+          dbKey: "",
+          description: "손으로 바른 것 같은 립스틱 자국과 칼라 마카로 적은 낙서가 보인다. '전국 대회 일등 해보자!! >.<'",
+          acquirable: true
+        }
       };
 
       function showObjectModal(text) {
@@ -139,6 +144,7 @@
       function closeObjectModal() {
         objectModal.classList.add('hidden');
         confirmModal.classList.add('hidden');
+        paperChoiceButtons.classList.add('hidden');
         choiceButtons.classList.remove('fade-out', 'hidden');
         choiceButtons.classList.add('fade-in');
         setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
@@ -166,13 +172,58 @@
         }
       });
 
-      choiceButtons.querySelectorAll('button').forEach(btn => {
+      /*choiceButtons.querySelectorAll('button').forEach(btn => {
         btn.addEventListener('click', () => {
           const key = btn.dataset.item;
           const cleanedLabel = key.replaceAll('\u00A0', ' ').trim();
           clickedItems.add(cleanedLabel);
           currentItem = itemData[cleanedLabel] || null;
+          if (cleanedLabel === "침낭") {
+            choiceButtons.classList.add('fade-out');
+            setTimeout(() => {
+              choiceButtons.classList.add('hidden');
+              paperChoiceButtons.classList.remove('hidden');
+            }, 600);
+            return;
+          }
           showObjectModal(currentItem.description);
+        });
+      });*/
+
+      document.querySelectorAll('#choice-buttons button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const key = btn.dataset.item;
+            const info = itemData[key];
+            if (!info) return;
+            clickedItems.add(key);
+            currentItem = info;
+
+            if (key === "침낭") {
+            choiceButtons.classList.add('fade-out');
+            setTimeout(() => {
+                choiceButtons.classList.add('hidden');
+                paperChoiceButtons.classList.remove('hidden');
+            }, 600);
+            return;
+            }
+
+            choiceButtons.classList.add('fade-out');
+            setTimeout(() => {
+            choiceButtons.classList.add('hidden');
+            objectDescText.innerText = info.description;
+            objectModal.classList.remove('hidden');
+            }, 600);
+        });
+        });
+
+      paperChoiceButtons.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          paperChoiceButtons.classList.add('hidden');
+          const action = btn.dataset.action;
+          if (action === 'examine') {
+            objectDescText.innerText = "누군가의 mp3가 있다. 2010년도 즈음의 유행곡이 폴더별로 나누어 담겨져 있다.";
+            objectModal.classList.remove('hidden');
+          }
         });
       });
 
@@ -180,7 +231,7 @@
       objectModal.querySelector('.modal-content').addEventListener('click', e => e.stopPropagation());
       confirmModal.querySelectorAll('.modal-backdrop, .close-button').forEach(el => el.addEventListener('click', closeConfirmModal));
       confirmModal.querySelector('.modal-content').addEventListener('click', e => e.stopPropagation());
-      btnCancel.addEventListener('click', closeConfirmModal);
+      btnCancel.addEventListener('click', closeObjectModal);
 
       document.querySelector('#object-modal .dialog-box').addEventListener('click', () => {
         if (!currentItem || !currentItem.acquirable) {
@@ -194,7 +245,6 @@
       btnOk.addEventListener('click', async () => {
         const key = confirmModal.dataset.pendingKey;
         closeConfirmModal();
-
         let json = { success: false, message: "획득에 실패했습니다." };
         try {
           const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, { method: 'POST' });
@@ -211,7 +261,7 @@
       });
 
       nextButton.addEventListener('click', () => {
-        window.location.href = '/homeroom';
+        window.location.href = '/clubroom3';
       });
     });
   </script>

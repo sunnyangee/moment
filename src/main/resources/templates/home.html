@@ -2,16 +2,16 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Start</title>
   <link rel="stylesheet" th:href="@{/css/home.css}" />
 </head>
 <body>
   <div class="viewport-wrapper">
     <div class="room-container">
-      <img id="room-image" src="/images/classroom1.jpg" alt="방 이미지" class="room-image"/>
+      <img id="room-image" src="/images/pastclassroom.jpg" alt="방 이미지" class="room-image"/>
 
-      <div id="location-label" class="location-label hidden">3-1</div>
+      <div id="location-label" class="location-label hidden">1F 3-1</div>
 
       <div class="ui-overlay">
         <div id="choice-buttons" class="choice-buttons hidden">
@@ -22,15 +22,12 @@
         </div>
 
         <div id="dialog-box" class="dialog-box">
-          <p id="dialog-text">우리는 흩어져 학교를 돌아보기로 했다.</p>
+          <p id="dialog-text">전체적으로 어두운 분위기의 교실이다. 나무 냄새도 나는 듯하다.</p>
           <div class="dialog-indicator">▼</div>
         </div>
 
         <div id="object-modal" class="object-modal hidden">
           <button class="close-button" onclick="closeObjectModal()">X</button>
-          <div class="object-image-wrapper">
-            <img id="object-image" src="" alt="아이템 이미지"/>
-          </div>
           <div id="object-description" class="dialog-box">
             <p id="object-description-text"></p>
             <div class="dialog-indicator">▼</div>
@@ -45,12 +42,9 @@
       <div id="inventory-modal" class="inventory-modal hidden">
         <button class="close-button" onclick="toggleInventory()">X</button>
         <h3>인벤토리</h3>
-        <ul>
-          <li th:each="item : ${user.items}" th:text="${item.name}">아이템</li>
-        </ul>
+        <ul id="inventory-list"></ul>
       </div>
 
-      <!-- 다음으로 넘어가는 버튼 -->
       <button id="next-button" class="next-button hidden">NEXT</button>
     </div>
   </div>
@@ -65,100 +59,69 @@
       const cb = document.getElementById('choice-buttons');
       cb.classList.remove('fade-out', 'hidden');
 
-      // 모든 선택지 클릭했으면 '다음' 버튼 보이기
       if (clickedItems.size === totalItems) {
         document.getElementById('next-button').classList.remove('hidden');
       }
     }
 
     function setViewportSize() {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
     }
     window.addEventListener('resize', setViewportSize);
     window.addEventListener('load', setViewportSize);
 
     const wrapper = document.querySelector('.viewport-wrapper');
-    const ua = navigator.userAgent.toLowerCase();
-    wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
+    wrapper.classList.add(
+      /android|iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase())
+        ? 'mobile-os'
+        : 'desktop-os'
+    );
 
     const dialogBox      = document.getElementById('dialog-box');
     const locationLabel  = document.getElementById('location-label');
     const choiceButtons  = document.getElementById('choice-buttons');
     const roomImage      = document.getElementById('room-image');
     const objectModal    = document.getElementById('object-modal');
-    const objectImage    = document.getElementById('object-image');
     const objectDescText = document.getElementById('object-description-text');
     const nextButton     = document.getElementById('next-button');
+    const inventoryList  = document.getElementById('inventory-list');
 
-    // 클릭된 아이템 기록용 Set, 전체 아이템 수
     const clickedItems = new Set();
     const itemData = {
-      "녹색 칠판": {
-        description: "어두운 진녹색 칠판이다.",
-        image: "/images/greenboard.png",
-        acquirable: false
-      },
-      "분필 털이": {
-        description: "방금까지도 사용한 듯, 분필 가루가 뭉쳐 떨어져 있다.",
-        image: "/images/chalk_eraser.png",
-        acquirable: false
-      },
-      "나무 책상과 의자": {
-        description: "나무 표면에 파인 낙서를 확인할 수 있다.",
-        image: "/images/table_chair.png",
-        acquirable: false
-      },
-      "가죽 표지 출석부": {
-        description: "낡은 가죽 커버의 출석부. 사진이 흐릿하다.",
-        image: "/images/attendance_book.png",
-        acquirable: false
-      }
+      "녹색 칠판":        { description: "어두운 진녹색 칠판이다.", acquirable:false },
+      "분필 털이":        { description: "방금까지도 사용한 듯, 분필 가루가 뭉쳐 떨어져 있다.", acquirable:false },
+      "나무 책상과 의자":  { description: "나무 표면을 칼 끝으로 깎은 듯이 불규칙적이게 파인 낙서들을 확인할 수 있다.", acquirable:false },
+      "가죽 표지 출석부":  { description: "낡은 밤색 가죽으로 덮인 출석부. 펼쳐 보면 누렇게 빛이 바랜 내부, 사진들은 잉크가 날아가 얼굴을 알아보기 힘들다. 출석부의 상단부가 줄로 묶여 교탁 서랍과 연결되어 있다.", acquirable:false }
     };
     const totalItems = Object.keys(itemData).length;
 
-    // 선택지 버튼 클릭
-    document.querySelectorAll('.choice-buttons button').forEach(btn => {
+    document.querySelectorAll('#choice-buttons button').forEach(btn => {
       btn.addEventListener('click', () => {
         const key = btn.dataset.item;
         const item = itemData[key];
         if (!item) return;
-
-        // 클릭 기록
         clickedItems.add(key);
-
-        // 선택지 숨기기
         choiceButtons.classList.add('fade-out');
         setTimeout(() => {
           choiceButtons.classList.add('hidden');
-
-          // 모달 내용 설정
-          objectImage.src = item.image;
           objectDescText.innerText = item.description;
-
-          // 모달 보여주기
           objectModal.classList.remove('hidden');
         }, 600);
       });
     });
 
-    // 모달 클릭하면 닫기
-    objectModal.addEventListener('click', () => {
-      closeObjectModal();
-    });
+    objectModal.addEventListener('click', closeObjectModal);
 
-    // Next 버튼 클릭 시 이동
     nextButton.addEventListener('click', () => {
       window.location.href = '/3-2';
     });
 
-    // 대화 진행
     let state = 0;
     dialogBox.addEventListener('click', () => {
       if (state === 0) {
         roomImage.classList.add('fade-out');
         setTimeout(() => {
-          roomImage.src = '/images/classroom2.jpg';
+          roomImage.src = '/images/pastclassroom.jpg';
           roomImage.classList.remove('fade-out');
           dialogBox.classList.add('hidden');
           choiceButtons.classList.remove('hidden');
@@ -167,6 +130,23 @@
         state++;
       }
     });
+
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        inventoryList.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          inventoryList.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+    loadInventory();
   </script>
 </body>
 </html>

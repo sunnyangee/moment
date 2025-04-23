@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>미술실</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+    <!-- 키패드 입력 모달 -->
+  <div id="keypad-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3>미술실로 이동하기 위해서는 숫자 키패드를 입력해야 한다.</h3>
+      <input type="text" id="keypad-input" placeholder="숫자 입력" maxlength="6"/>
+      <button id="keypad-submit">확인</button>
+    </div>
+  </div>
+  
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/classroom1.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">2F 미술실</div>
+
+      <div class="ui-overlay">
+        <!-- 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="이젤">이젤</button>
+          <button data-item="책꽂이">책꽂이</button>
+          <button data-item="대형 테이블 1">대형 테이블 1</button>
+          <button data-item="대형 테이블 2">대형 테이블 2</button>
+          <button data-item="보관함">보관함</button>
+          <button data-item="석고상 1">석고상 1</button>
+          <button data-item="석고상 2">석고상 2</button>
+        </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">미술실로 이동하기 위해서는 숫자 키패드를 입력해야 한다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <!-- 설명 모달 -->
+        <div id="object-modal" class="object-modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">×</button>
+            <div class="dialog-box">
+              <p id="object-description-text"></p>
+              <div class="dialog-indicator">▼</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <button class="close-button">×</button>
+          <h3>인벤토리</h3>
+          <ul id="inventory-list"></ul>
+        </div>
+      </div>
+
+      <!-- NEXT 버튼 -->
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    function setViewportSize() {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    }
+    window.addEventListener('resize', setViewportSize);
+    window.addEventListener('load', setViewportSize);
+
+    const wrapper        = document.querySelector('.viewport-wrapper');
+    const ua             = navigator.userAgent.toLowerCase();
+    const dialogBox      = document.getElementById('dialog-box');
+    const locationLabel  = document.getElementById('location-label');
+    const choiceButtons  = document.getElementById('choice-buttons');
+    const roomImage      = document.getElementById('room-image');
+    const objectModal    = document.getElementById('object-modal');
+    const objectDescText = document.getElementById('object-description-text');
+    const nextButton     = document.getElementById('next-button');
+    const inventoryBtn   = document.querySelector('.inventory-button');
+    const inventoryModal = document.getElementById('inventory-modal');
+    const inventoryList  = document.getElementById('inventory-list');
+
+    wrapper.classList.add(
+      /android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os'
+    );
+
+    const clickedItems = new Set();
+    const itemData = {
+      "이젤":   { description: "창가에 나무로 된 이젤이 네 개 자리해 있으며, 연식이 오래됐는지 군데군데 갈라졌다. 가장 우측의 이젤엔 그림 하나가 걸려 있는데, 자세히 보면……  '사투르노' 를 제법 흡사하게 따라 그린 모작이다.", acquirable: false },
+      "책꽂이": { description: "월간미술, 아트리뷰, 동서양의 미술, 교과서 등 다양한 서적이 보인다. 그중 서양의 미술 24는 빠져 있다.", acquirable: false },
+      "대형 테이블 1": { description: "빠져 있던 서양의 미술 24가 펼쳐져 있으며, 테이블 위로 서투른 모작이 여러 장 보인다. '마녀의 집회'를 각기 다른 스타일로 모작한 듯하다.", acquirable: false },
+      "대형 테이블 2": { description: "서투른 모작이 여러 장 보인다. 옆 테이블과 다른 작품이다. '몽둥이 싸움'을 각기 다른 스타일로 모작한 듯하다.", acquirable: false },
+      "보관함": { description: "미술용 붓과 팔레트, 물감, 물통이 차곡차곡 쌓여 보관되어 있다.", acquirable: false },
+      "석고상 1": { description: "흔히 볼 수 있는 여성의 흉상이다. 받침대 부분에 'Ariadne'라고 적혀 있다.", acquirable: false },
+      "석고상 2": { description: "흔히 볼 수 있는 남성의 흉상이다. 받침대 부분에 'Giuliano de' Medici'라고 적혀 있다.", acquirable: false }
+    };
+    const totalItems = Object.keys(itemData).length;
+
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        inventoryList.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          inventoryList.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+    loadInventory();
+
+    function toggleInventory() {
+      inventoryModal.classList.toggle('hidden');
+    }
+    inventoryBtn.addEventListener('click', toggleInventory);
+    inventoryModal.querySelector('.close-button').addEventListener('click', toggleInventory);
+    inventoryModal.querySelector('.modal-backdrop').addEventListener('click', toggleInventory);
+
+    function showObjectModal(text) {
+      choiceButtons.classList.add('fade-out');
+      setTimeout(() => {
+        choiceButtons.classList.add('hidden');
+        objectDescText.innerText = text;
+        objectModal.classList.remove('hidden');
+      }, 600);
+    }
+
+    function closeObjectModal() {
+      objectModal.classList.add('hidden');
+      choiceButtons.classList.remove('hidden','fade-out');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size === totalItems) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+
+    objectModal.querySelector('.modal-backdrop').addEventListener('click', closeObjectModal);
+    objectModal.querySelector('.close-button').addEventListener('click', closeObjectModal);
+    objectModal.querySelector('.modal-content').addEventListener('click', closeObjectModal);
+
+    choiceButtons.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.item;
+        const item = itemData[key];
+        if (!item) return;
+        clickedItems.add(key);
+        showObjectModal(item.description);
+      });
+    });
+
+    nextButton.addEventListener('click', () => {
+      window.location.href = '/broadcastingroom';
+    });
+
+    let state = 0;
+    dialogBox.addEventListener('click', () => {
+      if (state === 0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(() => {
+          roomImage.src = '/images/classroom2.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        }, 600);
+        state++;
+      }
+    });
+
+    // 키패드 모달 요소
+    const keypadModal  = document.getElementById('keypad-modal');
+    const keypadInput  = document.getElementById('keypad-input');
+    const keypadSubmit = document.getElementById('keypad-submit');
+
+    // 정답 (예: "1024")
+    const keypadAnswer = "052";
+
+    // 처음 로딩되면 키패드 모달 보이기
+    window.addEventListener('DOMContentLoaded', () => {
+    keypadModal.classList.remove('hidden');
+    dialogBox.classList.add('hidden');
+    });
+
+    // 제출 버튼 클릭
+    keypadSubmit.addEventListener('click', () => {
+    const input = keypadInput.value.trim();
+    if (input === keypadAnswer) {
+        keypadModal.classList.add('hidden');
+        dialogBox.querySelector('#dialog-text').innerText = "기물이 많아 꽤나 복잡한 정경이다. 어딘가에서 녹진한 초콜릿 향이 나는 듯하다.";
+        dialogBox.classList.remove('hidden');
+    } else {
+        alert("키패드 입력이 틀렸습니다.");
+        keypadInput.value = "";
+    }
+    });
+
+  </script>
+</body>
+</html>

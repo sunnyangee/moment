@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>도서관</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/classroom1.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">2F 도서관</div>
+
+      <div class="ui-overlay">
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="101 ㄱ~ㄷ">101 ㄱ~ㄷ</button>
+          <button data-item="102 ㄹ~ㅂ">102 ㄹ~ㅂ</button>
+          <button data-item="103 ㅅ~ㅈ">103 ㅅ~ㅈ</button>
+          <button data-item="104 ㅊ~ㅌ">104 ㅊ~ㅌ</button>
+          <button data-item="105 ㅍ~ㅎ">105 ㅍ~ㅎ</button>
+          <button data-item="106 1~9, 국외서적">106 1~9, 국외서적</button>
+          <button data-item="반납대">반납대</button>
+          <button data-item="도서관 데스크">도서관 데스크</button>
+        </div>
+
+        <div id="paper-choice-buttons" class="choice-buttons hidden">
+          <button data-action="laptop">노트북을 본다</button>
+          <button data-action="glasses">안경을 본다</button>
+        </div>
+
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">들어서자마자 책 내음이 물씬 풍긴다. 대체로 정돈된 분위기가 차분하며, 가장 앞쪽부터 가나다순으로 세워진 책장을 볼 수 있다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <div id="object-modal" class="object-modal hidden">
+          <button class="close-button" onclick="closeObjectModal()">X</button>
+          <div id="object-description" class="dialog-box">
+            <p id="object-description-text"></p>
+            <div class="dialog-indicator">▼</div>
+          </div>
+        </div>
+
+        <div id="confirm-acquire-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
+            <button id="btn-acquire-ok">확인</button>
+            <button id="btn-acquire-cancel">취소</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="inventory-button" onclick="toggleInventory()">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <button class="close-button" onclick="toggleInventory()">X</button>
+        <h3>인벤토리</h3>
+        <ul id="inventory-list"></ul>
+      </div>
+
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        const ul = document.getElementById('inventory-list');
+        ul.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          ul.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+
+    loadInventory();
+
+    function toggleInventory() {
+      document.getElementById('inventory-modal').classList.toggle('hidden');
+    }
+
+    function closeObjectModal() {
+      document.getElementById('object-modal').classList.add('hidden');
+      document.getElementById('confirm-acquire-modal').classList.add('hidden');
+      choiceButtons.classList.remove('fade-out', 'hidden');
+      choiceButtons.classList.add('fade-in');
+      paperChoiceButtons.classList.add('hidden');
+      setTimeout(()=> choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size === totalItems) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+
+    const choiceButtons = document.getElementById('choice-buttons');
+    const paperChoiceButtons = document.getElementById('paper-choice-buttons');
+    const dialogBox = document.getElementById('dialog-box');
+    const locationLabel = document.getElementById('location-label');
+    const roomImage = document.getElementById('room-image');
+    const objectModal = document.getElementById('object-modal');
+    const objectDescText = document.getElementById('object-description-text');
+    const nextButton = document.getElementById('next-button');
+    const inventoryModal = document.getElementById('inventory-modal');
+    const inventoryList = document.getElementById('inventory-list');
+    const confirmModal = document.getElementById('confirm-acquire-modal');
+    const confirmText = document.getElementById('confirm-acquire-text');
+    const btnOk = document.getElementById('btn-acquire-ok');
+    const btnCancel = document.getElementById('btn-acquire-cancel');
+
+    const clickedItems = new Set();
+    let currentItem = null;
+    let state = 0;
+
+    const wrapper = document.querySelector('.viewport-wrapper');
+    const ua = navigator.userAgent.toLowerCase();
+    wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
+
+    const itemData = {
+      "101 ㄱ~ㄷ": { description: "'그리스 로마 신화' 1-18권. 구버전과 새 버전이 함께 놓여 있으며, 구, 신작의 10~16권 부분은 마구 뒤섞여 있다.", acquirable: false },
+      "102 ㄹ~ㅂ": { description: "'모순' (저자, 양귀자), '밀실살인게임' (저자, 우타노 쇼고) 등이 꽂혀 있다.", acquirable: false },
+      "103 ㅅ~ㅈ": { description: "'시간을 달리는 소녀' (저자, 스스이 야스타카), '양자' (저자, 조나연), '적' (저자, 다비드 칼리) 등이 꽂혀 있다.", acquirable: false },
+      "104 ㅊ~ㅌ": { description: "'코마' (저자, 로빈 쿡) …… 응? 정돈되지 않은 건지 가나다 순이 아닌 다른 순서의 책들도 마구 꽂혀 있다. 도서 당번의 근무 태만인가 보다.", acquirable: false },
+      "105 ㅍ~ㅎ": { description: "'헝거 게임' (저자, 수잔 콜린스), '파우스터' (저자, 김호연) 등이 있다. ", acquirable: false },
+      "106 1~9, 국외서적": { description: "'67번째 천산갑' (저자, 천쓰홍) 외 다양한 국외 서적들이 있다. 메모지 하나에 '말할 수 없는 비밀과 표현 못 할 고통이 이어지는 길' 이라고 적혀 있다.", acquirable: false },
+      "반납대": { description: "만화책 '신이 말하는 대로' 전권이 놓여 있으나, 2권과 10권이 빠져 있다.", acquirable: false },
+      "도서관 데스크": { description: "빈자리에는 사서의 도수 높은 안경과 노트북이 자리해 있다.", acquirable: false }
+    };
+
+    const totalItems = Object.keys(itemData).length;
+
+    dialogBox.addEventListener('click', () => {
+      if (state === 0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(() => {
+          roomImage.src = '/images/classroom2.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        }, 600);
+        state++;
+      }
+    });
+
+    document.querySelectorAll('#choice-buttons button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.item;
+        const info = itemData[key];
+        if (!info) return;
+        clickedItems.add(key);
+        currentItem = info;
+        if (key === "도서관 데스크") {
+          choiceButtons.classList.add('hidden');
+          paperChoiceButtons.classList.remove('hidden');
+          return;
+        }
+        choiceButtons.classList.add('fade-out');
+        setTimeout(() => {
+          choiceButtons.classList.add('hidden');
+          objectDescText.innerText = info.description;
+          objectModal.classList.remove('hidden');
+        }, 600);
+      });
+    });
+
+    objectModal.addEventListener('click', () => {
+      if (!currentItem || !currentItem.acquirable) return closeObjectModal();
+      confirmModal.dataset.pendingKey = currentItem.dbKey;
+      confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+      confirmModal.classList.remove('hidden');
+    });
+
+    paperChoiceButtons.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        paperChoiceButtons.classList.add('hidden');
+        const action = btn.dataset.action;
+        if (action === 'laptop') {
+          objectDescText.innerText = "노트북에는 암호가 걸려 있다. (액셀 코드)";
+        } else if (action === 'glasses') {
+          objectDescText.innerText = "도수가 높은 얇은 반무테 안경이다. 렌즈에 'TUTIMA' 각인이 있다.";
+        }
+        objectModal.classList.remove('hidden');
+      });
+    });
+
+    btnOk.addEventListener('click', async () => {
+      const key = confirmModal.dataset.pendingKey;
+      closeObjectModal();
+      try {
+        const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, { method: 'POST' });
+        const json = await resp.json();
+        if (json.success) await loadInventory();
+        else alert(json.message);
+      } catch {
+        alert("획득에 실패했습니다.");
+      }
+    });
+
+    btnCancel.addEventListener('click', closeObjectModal);
+
+    nextButton.addEventListener('click', () => {
+      window.location.href = '/teachersroom';
+    });
+  </script>
+</body>
+</html>
