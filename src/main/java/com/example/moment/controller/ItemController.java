@@ -135,9 +135,7 @@ public class ItemController {
                 .filter(i -> "기억".equals(i.getCategory()))
                 .count();
             if (already >= 2) {
-                throw new IllegalStateException(
-                    String.format("‘기억’ 카테고리 아이템은 사용자당 최대 %d개까지 획득 가능합니다.", 2)
-                );
+                res.put("message", "기억 아이템 한도에 도달했습니다.");
             }
         }
 
