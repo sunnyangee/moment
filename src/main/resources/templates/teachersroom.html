@@ -220,19 +220,25 @@
     const keypadModal  = document.getElementById('keypad-modal');
     const keypadInput  = document.getElementById('keypad-input');
     const keypadSubmit = document.getElementById('keypad-submit');
-    const keypadAnswer = "912534768";
 
     window.addEventListener('DOMContentLoaded', () => {
       keypadModal.classList.remove('hidden');
     });
 
-    keypadSubmit.addEventListener('click', () => {
-      const input = keypadInput.value.trim();
-      if (input === keypadAnswer) {
+    keypadSubmit.addEventListener('click', async () => {
+    const answer = keypadInput.value.trim();
+      try {
+        const resp = await fetch('/api/check-password/teachersroom', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer })
+        });
+        if (!resp.ok) throw new Error();
+
         keypadModal.classList.add('hidden');
         dialogBox.classList.remove('hidden');
         dialogBox.querySelector('#dialog-text').textContent = "교무실로 이동합니다...";
-      } else {
+      } catch {
         alert("키패드 입력이 틀렸습니다.");
         keypadInput.value = "";
       }

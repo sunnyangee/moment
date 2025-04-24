@@ -177,18 +177,25 @@
     });
 
     // 책장 암호 입력
-    passwordSubmit.addEventListener('click', () => {
-      if (passwordInput.value.trim().toLowerCase() === passwordAnswer) {
+    passwordSubmit.addEventListener('click', async () => {
+    const answer = passwordInput.value.trim();
+      try {
+        const resp = await fetch('/api/check-password/scienceroom', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer })
+        });
+        if (!resp.ok) throw new Error();
+
         passwordModal.classList.add('hidden');
         dialogBox.classList.add('hidden');
         objectDescText.innerText = itemData['책장'].description;
         objectModal.classList.remove('hidden');
-      } else {
+      } catch {
         alert('비밀번호가 틀렸습니다.');
         passwordInput.value = '';
       }
     });
-    closePwdBtns.forEach(btn => btn.addEventListener('click', () => passwordModal.classList.add('hidden')));
 
     // object-modal 클릭
     objectModal.querySelector('.modal-backdrop').addEventListener('click', closeObjectModal);

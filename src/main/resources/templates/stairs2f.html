@@ -42,32 +42,32 @@
     const ua = navigator.userAgent.toLowerCase();
     wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
 
-    const keypadAnswer = "5402";
 
-    keypadSubmit.addEventListener('click', () => {
-      const input = keypadInput.value.trim().toLowerCase();
-      if (input === keypadAnswer) {
+    keypadSubmit.addEventListener('click', async () => {
+    const answer = keypadInput.value.trim();
+      try {
+        const resp = await fetch('/api/check-password/stairs2f', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer })
+        });
+        if (!resp.ok) throw new Error();
+
         keypadModal.classList.add('hidden');
         dialogText.textContent = "3층으로 이동합니다...";
         dialogBox.classList.remove('hidden');
-      } else {
+      } catch {
         alert("키패드 입력이 틀렸습니다.");
         keypadInput.value = "";
       }
     });
 
     keypadInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
-        keypadSubmit.click();
-      }
+      if (e.key === 'Enter') keypadSubmit.click();
     });
 
     dialogBox.addEventListener('click', () => {
       window.location.href = "/musicroom";
-    });
-
-    window.addEventListener('DOMContentLoaded', () => {
-      keypadModal.classList.remove('hidden');
     });
   </script>
 </body>

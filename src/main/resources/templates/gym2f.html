@@ -178,8 +178,6 @@
     const keypadInput  = document.getElementById('keypad-input');
     const keypadSubmit = document.getElementById('keypad-submit');
 
-    // 정답 (예: "1024")
-    const keypadAnswer = "사월의 반복";
 
     // 처음 로딩되면 키패드 모달 보이기
     window.addEventListener('DOMContentLoaded', () => {
@@ -188,16 +186,24 @@
     });
 
     // 제출 버튼 클릭
-    keypadSubmit.addEventListener('click', () => {
-    const input = keypadInput.value.trim();
-    if (input === keypadAnswer) {
+    keypadSubmit.addEventListener('click', async () => {
+    const answer = keypadInput.value.trim();
+      try {
+        const resp = await fetch('/api/check-password/gym2f', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer })
+        });
+        if (!resp.ok) throw new Error();
+
         keypadModal.classList.add('hidden');
-        dialogBox.querySelector('#dialog-text').innerText = "객석과 창문 난간을 살필 수 있다.";
+        dialogBox.querySelector('#dialog-text').textContent =
+          "객석과 창문 난간을 살필 수 있다.";
         dialogBox.classList.remove('hidden');
-    } else {
+      } catch {
         alert("키패드 입력이 틀렸습니다.");
         keypadInput.value = "";
-    }
+      }
     });
 
   </script>
