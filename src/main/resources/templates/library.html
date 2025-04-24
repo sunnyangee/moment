@@ -102,15 +102,16 @@
     }
 
     function closeObjectModal() {
-      document.getElementById('object-modal').classList.add('hidden');
-      document.getElementById('confirm-acquire-modal').classList.add('hidden');
-      choiceButtons.classList.remove('fade-out', 'hidden');
+      objectModal.classList.add('hidden');
+      confirmModal.classList.add('hidden');
+      choiceButtons.classList.remove('hidden', 'fade-out');
       choiceButtons.classList.add('fade-in');
-      setTimeout(()=> choiceButtons.classList.remove('fade-in'), 600);
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
       if (clickedItems.size === totalItems) {
         nextButton.classList.remove('hidden');
       }
     }
+
 
     const choiceButtons = document.getElementById('choice-buttons');
     const paperChoiceButtons = document.getElementById('paper-choice-buttons');
@@ -157,7 +158,7 @@
       if (state === 0) {
         roomImage.classList.add('fade-out');
         setTimeout(() => {
-          roomImage.src = '/images/overnightroom.jpg';
+          roomImage.src = '/images/library.jpg';
           roomImage.classList.remove('fade-out');
           dialogBox.classList.add('hidden');
           choiceButtons.classList.remove('hidden');
@@ -187,6 +188,11 @@
         }, 600);
       });
     });
+
+    document.querySelector('#object-description').addEventListener('click', () => {
+      closeObjectModal();
+    });
+
 
     // 노트북 설명 후 암호 입력 흐름
     openPasswordBtn.addEventListener('click', () => {
