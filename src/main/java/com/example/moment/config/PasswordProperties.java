@@ -21,6 +21,10 @@ public class PasswordProperties {
     public void logLoaded() {
         System.out.println("🔑 Loaded password keys: " + map.keySet());
     }
+    @PostConstruct
+    public void logKeys() {
+    System.out.println("Loaded passwords keys → " + map.keySet());
+    }
     private Map<String, String> map = new HashMap<>();
 
     public Map<String, String> getMap() {
