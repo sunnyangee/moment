@@ -53,7 +53,9 @@ public class SecurityConfig {
             .requestMatchers(
               "/login",
               "/css/**", "/js/**", "/images/**",
-              "/error"
+              "/error",
+              "/api/check-password/**",
+              "/api/debug-passwords"
             ).permitAll()
 
             // 키패드 검증 API도 로그인 없이 허용
