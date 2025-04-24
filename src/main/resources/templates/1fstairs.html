@@ -44,23 +44,33 @@
 
 
     keypadSubmit.addEventListener('click', async () => {
-    const answer = keypadInput.value.trim().toLowerCase();
+      // ① client-side 에서 보내는 answer
+      const answer = keypadInput.value.trim().toLowerCase();
+      console.log('🔑 보내는 값:', answer);
+
       try {
+        // ② POST 로 /1fstairs 로 보내기
         const resp = await fetch('/api/check-password/1fstairs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ answer })
         });
-        if (!resp.ok) throw new Error();
+        console.log('📨 응답 상태:', resp.status);
 
+        if (!resp.ok) throw new Error('인증실패');
+
+        // ③ 성공 시 UI 전환
         keypadModal.classList.add('hidden');
         dialogText.textContent = "2층으로 이동합니다...";
         dialogBox.classList.remove('hidden');
-      } catch {
+
+      } catch (e) {
+        // ④ 실패 시
         alert("키패드 입력이 틀렸습니다.");
         keypadInput.value = "";
       }
     });
+
 
     keypadInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') keypadSubmit.click();
