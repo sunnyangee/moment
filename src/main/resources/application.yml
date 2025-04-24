@@ -1,15 +1,15 @@
 # src/main/resources/application.yml
 
 passwords:
-  library: 341213452
-  homeroom: 10111 
-  1fstairs: dayandnight
-  teachersroom: 912534768
-  artroom: 052
+  library: "341213452"
+  homeroom: "10111" 
+  "1fstairs": "dayandnight"
+  teachersroom: "912534768"
+  artroom: "052"
   gym2f: 사월의 반복
-  stairs2f: 5402
-  englishroom: past
-  scienceroom: tale
+  stairs2f: "5402"
+  englishroom: "past"
+  scienceroom: "tale"
 
 
 
