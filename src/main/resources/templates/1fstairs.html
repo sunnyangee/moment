@@ -52,6 +52,7 @@
         // ② POST 로 /1fstairs 로 보내기
         const resp = await fetch('/api/check-password/1fstairs', {
           method: 'POST',
+          credentials: 'same-origin', 
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ answer })
         });
