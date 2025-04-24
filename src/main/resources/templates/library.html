@@ -216,17 +216,34 @@
       });
     });
 
-    passwordSubmit.addEventListener('click', () => {
-      if (passwordInput.value.trim() === passwordAnswer) {
-        passwordModal.classList.add('hidden');
-        dialogText.innerText = "미처 끄지 않은 메모장을 확인할 수 있다. \n\nCODE: QHL7492";
-        dialogBox.classList.remove('hidden');
-        libraryPasswordUnlocked = true;
-      } else {
-        alert("비밀번호가 틀렸습니다.");
-        passwordInput.value="";
+    passwordSubmit.addEventListener('click', async () => {
+      const answer = passwordInput.value.trim();
+      try {
+        // 여기에 'library' 대신 해당 방의 ID를 넣어주세요.
+        const resp = await fetch(`/api/check-password/library`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer })
+        });
+
+        if (resp.ok) {
+          // 성공 시: 모달 닫고, 설명・다이얼로그 띄우기
+          passwordModal.classList.add('hidden');
+          choiceButtons.classList.add('hidden');
+          paperChoiceButtons.classList.add('hidden');
+          dialogText.innerText = "미처 끄지 않은 메모장을 확인할 수 있다.\n\nCODE: QHL7492";
+          dialogBox.classList.remove('hidden');
+        } else {
+          // 실패 시
+          alert('비밀번호가 틀렸습니다.');
+          passwordInput.value = '';
+        }
+      } catch (e) {
+        console.error(e);
+        alert('서버 오류가 발생했습니다.');
       }
     });
+
 
     btnOk.addEventListener('click', async () => {
       const key = confirmModal.dataset.pendingKey;

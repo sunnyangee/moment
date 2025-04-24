@@ -1,0 +1,5 @@
+# src/main/resources/application.yml
+
+passwords:
+  library: 341213452
+  homeroom: 10111 

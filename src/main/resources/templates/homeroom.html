@@ -192,16 +192,24 @@
     });
 
     // 제출 버튼 클릭
-    keypadSubmit.addEventListener('click', () => {
-    const input = keypadInput.value.trim();
-    if (input === keypadAnswer) {
+    keypadSubmit.addEventListener('click', async () => {
+      const answer = keypadInput.value.trim();
+      try {
+        const resp = await fetch('/api/check-password/homeroom', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer })
+        });
+        if (!resp.ok) throw new Error();
+
         keypadModal.classList.add('hidden');
-        dialogBox.querySelector('#dialog-text').innerText = "포근하고 눅눅한 공기가 불쑥, 마중을 나온다. 미묘한 음식 냄새가 은근히 식욕을 자극한다.";
+        dialogBox.querySelector('#dialog-text').innerText =
+          "포근하고 눅눅한 공기가 불쑥, 마중을 나온다. 미묘한 음식 냄새가 은근히 식욕을 자극한다.";
         dialogBox.classList.remove('hidden');
-    } else {
-        alert("키패드 입력이 틀렸습니다.");
-        keypadInput.value = "";
-    }
+      } catch {
+        alert('키패드 입력이 틀렸습니다.');
+        keypadInput.value = '';
+      }
     });
 
   </script>
