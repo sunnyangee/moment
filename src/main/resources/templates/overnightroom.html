@@ -92,13 +92,14 @@
       document.getElementById('confirm-acquire-modal').classList.add('hidden');
       choiceButtons.classList.remove('fade-out', 'hidden');
       choiceButtons.classList.add('fade-in');
-      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      setTimeout(()=> choiceButtons.classList.remove('fade-in'), 600);
       if (clickedItems.size === totalItems) {
         nextButton.classList.remove('hidden');
       }
     }
 
     const choiceButtons = document.getElementById('choice-buttons');
+    const paperChoiceButtons = document.getElementById('paper-choice-buttons');
     const dialogBox = document.getElementById('dialog-box');
     const locationLabel = document.getElementById('location-label');
     const roomImage = document.getElementById('room-image');
@@ -126,7 +127,7 @@
       },
       "벽걸이 행거": {
         description: "경광봉과 경비원 모자, 겉옷이 걸려 있다. 자수로 놓인 한자 명찰 深揆赫 이 가슴 부분에 박음질 되어 있다.",
-        acquirable: falseac
+        acquirable: false
       },
       "식탁과 간이의자": {
         dbKey: "손전등",
@@ -141,7 +142,7 @@
       if (state === 0) {
         roomImage.classList.add('fade-out');
         setTimeout(() => {
-          roomImage.src = '/images/overnightroom.jpg';
+          roomImage.src = '/images/principalsoffice.jpg';
           roomImage.classList.remove('fade-out');
           dialogBox.classList.add('hidden');
           choiceButtons.classList.remove('hidden');

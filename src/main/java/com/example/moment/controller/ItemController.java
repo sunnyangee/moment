@@ -126,6 +126,21 @@ public class ItemController {
             }
         }
 
+        if ("기억".equals(item.getCategory())) {
+            long already = acquisitionRepository.findAllByUsername(username).stream()
+                .map(ItemAcquisition::getItemKey)
+                .map(itemRepository::findByName)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .filter(i -> "기억".equals(i.getCategory()))
+                .count();
+            if (already >= 2) {
+                throw new IllegalStateException(
+                    String.format("‘기억’ 카테고리 아이템은 사용자당 최대 %d개까지 획득 가능합니다.", 2)
+                );
+            }
+        }
+
         
 
         // 1) item_acquisition 테이블에 저장
