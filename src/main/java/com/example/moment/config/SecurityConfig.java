@@ -49,13 +49,21 @@ public class SecurityConfig {
 
           // 리소스별 권한
           .authorizeHttpRequests(auth -> auth
+            // 기존 퍼밋
             .requestMatchers(
               "/login",
               "/css/**", "/js/**", "/images/**",
               "/error"
             ).permitAll()
+
+            // 키패드 검증 API도 로그인 없이 허용
+            .requestMatchers("/api/check-password/**").permitAll()
+
+            // 사용자 영역
             .requestMatchers("/home").hasRole("USER")
             .requestMatchers("/progress/**").hasRole("USER")
+
+            // 그 외는 인증 필요
             .anyRequest().authenticated()
           )
 
@@ -82,11 +90,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * 로그인 성공 시:
-     * - stage == "start" 이면 /home
-     * - 그 외면 /progress
-     */
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
         return (HttpServletRequest req,
