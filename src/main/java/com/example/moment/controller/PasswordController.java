@@ -15,6 +15,11 @@ public class PasswordController {
 
     private final PasswordProperties pwProps;
 
+    @GetMapping("/debug-passwords")
+    public Map<String,String> debugPasswords() {
+        return pwProps.getMap();
+    }
+    
     @PostMapping("/check-password/{roomId}")
     public ResponseEntity<Map<String, Boolean>> checkPassword(
             @PathVariable String roomId,
