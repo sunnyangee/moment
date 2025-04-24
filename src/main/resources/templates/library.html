@@ -219,7 +219,7 @@
       const answer = passwordInput.value.trim();
       try {
         // 여기에 'library' 대신 해당 방의 ID를 넣어주세요.
-        const resp = await fetch(`/api/check-password/library`, {
+        const resp = await fetch('/api/check-password/library', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ answer })

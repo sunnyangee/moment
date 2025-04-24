@@ -46,7 +46,7 @@
     keypadSubmit.addEventListener('click', async () => {
     const answer = keypadInput.value.trim().toLowerCase();
       try {
-        const resp = await fetch('/api/check-password/stairs', {
+        const resp = await fetch('/api/check-password/1fstairs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ answer })
