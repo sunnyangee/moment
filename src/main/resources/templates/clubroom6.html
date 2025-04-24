@@ -9,7 +9,7 @@
 <body>
   <div class="viewport-wrapper">
     <div class="room-container">
-      <img id="room-image" src="/images/classroom2.jpg" alt="방 이미지" class="room-image"/>
+      <img id="room-image" src="/images/clubroom6.jpg" alt="방 이미지" class="room-image"/>
 
       <div id="location-label" class="location-label hidden">별관 2F 치어리더부실</div>
 
@@ -97,7 +97,7 @@
     const clickedItems = new Set();
     const itemData = {
       "장롱":      { description: "내부에는 긴팔 유니폼, 반팔 유니폼 두 종류가 빼곡히 걸려 있다. ",                acquirable: false },
-      "단체 사진":        { description: "다 같이 유니폼을 입고 찍은 사진이 벽에 걸려 있다. 환하게 웃으며 모 아이돌 그룹처럼 인간 삼단 탑을 쌓고 있는 모습이 압권이다. 그 아래 조잡한 스티커 한 장이 붙어 있다. \n CODE: QXC1937", acquirable: false },
+      "단체 사진":        { description: "다 같이 유니폼을 입고 찍은 사진이 벽에 걸려 있다. 환하게 웃으며 모 아이돌 그룹처럼 인간 삼단 탑을 쌓고 있는 모습이 압권이다. 그 아래 조잡한 스티커 한 장이 붙어 있다. \n\n CODE: QXC1937", acquirable: false },
       "바구니":  { description: "치어리딩에 필요한 응원 도구들이 모여 있다, 황금색 수술과 깃발, 현수막 등이 들어 있다.",             acquirable: false }
     };
     const totalItems = Object.keys(itemData).length;
@@ -131,7 +131,7 @@
       if (state === 0) {
         roomImage.classList.add('fade-out');
         setTimeout(() => {
-          roomImage.src = '/images/classroom2.jpg';
+          roomImage.src = '/images/clubroom6.jpg';
           roomImage.classList.remove('fade-out');
           dialogBox.classList.add('hidden');
           choiceButtons.classList.remove('hidden');

@@ -17,14 +17,8 @@ public class Item {
     @Column
     private String description;
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
+    @Column(nullable = false)
+    private String category;  // 추가: 카테고리
 
     @Column(name = "is_taken")
     private Boolean isTaken = false;
@@ -40,38 +34,35 @@ public class Item {
 
     protected Item() {}
 
-    public Item(String name, Boolean isLimited, Integer maxQuantity) {
+    public Item(String name, String category, Boolean isLimited, Integer maxQuantity) {
         this.name = name;
+        this.category = category;
         this.isLimited = isLimited;
         this.maxQuantity = maxQuantity;
     }
 
-    // --- 기존 필드 getter/setter ---
+    // --- getter / setter ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+
     public Boolean getIsTaken() { return isTaken; }
     public void setIsTaken(Boolean isTaken) { this.isTaken = isTaken; }
 
+    public Boolean getIsLimited() { return isLimited; }
+    public void setIsLimited(Boolean isLimited) { this.isLimited = isLimited; }
+
+    public Integer getMaxQuantity() { return maxQuantity; }
+    public void setMaxQuantity(Integer maxQuantity) { this.maxQuantity = maxQuantity; }
+
     public Set<User> getUsers() { return users; }
     public void setUsers(Set<User> users) { this.users = users; }
-
-    // --- isLimited 필드의 JavaBean 규칙 getter/setter ---
-    public Boolean getIsLimited() {
-        return isLimited;
-    }
-    public void setIsLimited(Boolean isLimited) {
-        this.isLimited = isLimited;
-    }
-
-    // --- maxQuantity 필드 getter/setter ---
-    public Integer getMaxQuantity() {
-        return maxQuantity;
-    }
-    public void setMaxQuantity(Integer maxQuantity) {
-        this.maxQuantity = maxQuantity;
-    }
 }

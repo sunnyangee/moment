@@ -9,12 +9,11 @@
 <body>
   <div class="viewport-wrapper">
     <div class="room-container">
-      <img id="room-image" src="/images/classroom1.jpg" alt="방 이미지" class="room-image"/>
-
+      <img id="room-image" src="/images/cafeteria.jpg" alt="방 이미지" class="room-image"/>
       <div id="location-label" class="location-label hidden">1F 급식실</div>
 
       <div class="ui-overlay">
-        <!-- 1) 선택지 -->
+        <!-- 선택지 -->
         <div id="choice-buttons" class="choice-buttons hidden">
           <button data-item="입구 게시판">입구 게시판</button>
           <button data-item="배식대">배식대</button>
@@ -22,152 +21,217 @@
           <button data-item="조리실">조리실</button>
         </div>
 
-        <!-- 2) 대화 박스 -->
+        <!-- 대화 박스 -->
         <div id="dialog-box" class="dialog-box">
-          <p id="dialog-text">고요하고 깨끗한 내부가 우리를 반긴다. 더운 김 나는 정겨운 풍경은 존재하지 않는다. </p>
+          <p id="dialog-text">고요하고 깨끗한 내부가 우리를 반긴다. 더운 김 나는 정겨운 풍경은 존재하지 않는다.</p>
           <div class="dialog-indicator">▼</div>
         </div>
 
-        <!-- 3) 설명 모달 (이미지 제거) -->
+        <!-- 설명 모달 -->
         <div id="object-modal" class="object-modal hidden">
-          <!-- 모달 배경 -->
           <div class="modal-backdrop"></div>
           <div class="modal-content">
             <button class="close-button">×</button>
-            <div id="object-description" class="dialog-box">
+            <div class="dialog-box">
               <p id="object-description-text"></p>
               <div class="dialog-indicator">▼</div>
             </div>
           </div>
         </div>
+
+        <!-- 획득 확인 모달 -->
+        <div id="confirm-acquire-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">×</button>
+            <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
+            <button id="btn-acquire-ok">확인</button>
+            <button id="btn-acquire-cancel">취소</button>
+          </div>
+        </div>
       </div>
 
       <!-- 인벤토리 -->
-      <button class="inventory-button">
+      <button class="inventory-button" onclick="toggleInventory()">
         <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
       </button>
       <div id="inventory-modal" class="inventory-modal hidden">
-        <div class="modal-backdrop"></div>
+        <div class="modal-backdrop" onclick="toggleInventory()"></div>
         <div class="modal-content">
-          <button class="close-button">×</button>
+          <button class="close-button" onclick="toggleInventory()">×</button>
           <h3>인벤토리</h3>
           <ul id="inventory-list"></ul>
         </div>
       </div>
 
-      <!-- NEXT 버튼 -->
+      <!-- NEXT -->
       <button id="next-button" class="next-button hidden">NEXT</button>
     </div>
   </div>
 
-  <script>
-    function setViewportSize() {
-      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
-    }
-    window.addEventListener('resize', setViewportSize);
-    window.addEventListener('load', setViewportSize);
-
-    const wrapper       = document.querySelector('.viewport-wrapper');
-    const ua            = navigator.userAgent.toLowerCase();
-    const dialogBox     = document.getElementById('dialog-box');
-    const locationLabel = document.getElementById('location-label');
-    const choiceButtons = document.getElementById('choice-buttons');
-    const roomImage     = document.getElementById('room-image');
-    const objectModal   = document.getElementById('object-modal');
-    const objectDesc    = document.getElementById('object-description-text');
-    const nextButton    = document.getElementById('next-button');
-    const inventoryBtn  = document.querySelector('.inventory-button');
-    const inventoryModal= document.getElementById('inventory-modal');
-    const inventoryList = document.createElement('ul');
-    inventoryList.id = 'inventory-list';
-    document.querySelector('#inventory-modal .modal-content').appendChild(inventoryList);
-
-    wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
-
-    const clickedItems = new Set();
-    const itemData = {
-      "입구 게시판": { description: "한 달간의 급식 메뉴가 한 번에 적혀 있다. 수요일은 형광 노란색 펜으로 체크되어 있다." },
-      "배식대":       { description: "'자율 배식' 이라는 문구가 적혀 있고, 앞쪽엔 식기류가 쌓여 있다." },
-      "퇴식구":       { description: "소독 스프레이, 물끌개와 행주 등의 청소 도구가 가지런히 놓여 있다. " },
-      "조리실":       { description: "오래 사용하지 않은 건지 조리기구마다 먼지가 쌓여 있다. 가스불은 들어오지 않는다." }
-    };
-    const totalItems = Object.keys(itemData).length;
-
-    async function loadInventory() {
-      try {
-        const resp = await fetch('/api/items');
-        if (!resp.ok) throw new Error(resp.status);
-        const items = await resp.json();
-        inventoryList.innerHTML = '';
-        items.forEach(item => {
-          const li = document.createElement('li');
-          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
-          inventoryList.appendChild(li);
-        });
-      } catch (e) {
-        console.error('인벤토리 로드 실패', e);
+  <!-- ✅ 불필요한 약 수납장 조건 및 열쇠 소비 로직 제거된 전체 코드 -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      async function loadInventory() {
+        try {
+          const resp = await fetch('/api/items');
+          if (!resp.ok) throw new Error(resp.status);
+          const items = await resp.json();
+          const ul = document.getElementById('inventory-list');
+          ul.innerHTML = '';
+          items.forEach(item => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+            ul.appendChild(li);
+          });
+        } catch (e) {
+          console.error('인벤토리 로드 실패', e);
+        }
       }
-    }
-    loadInventory();
-
-    function toggleInventory() {
-      inventoryModal.classList.toggle('hidden');
-    }
-    inventoryBtn.addEventListener('click', toggleInventory);
-    inventoryModal.querySelector('.close-button').addEventListener('click', toggleInventory);
-    inventoryModal.querySelector('.modal-backdrop').addEventListener('click', toggleInventory);
-
-    function showObjectModal(text) {
-      choiceButtons.classList.add('fade-out');
-      setTimeout(() => {
-        choiceButtons.classList.add('hidden');
-        objectDesc.innerText = text;
-        objectModal.classList.remove('hidden');
-      }, 600);
-    }
-
-    function closeObjectModal() {
-      objectModal.classList.add('hidden');
-      choiceButtons.classList.remove('hidden','fade-out');
-      choiceButtons.classList.add('fade-in');
-      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
-      if (clickedItems.size === totalItems) {
-        nextButton.classList.remove('hidden');
+    
+      loadInventory();
+    
+      function setViewportSize() {
+        document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
       }
-    }
-
-    objectModal.querySelector('.modal-backdrop').addEventListener('click', closeObjectModal);
-    objectModal.querySelector('.close-button').addEventListener('click', closeObjectModal);
-    objectModal.querySelector('.modal-content').addEventListener('click', closeObjectModal);
-
-    choiceButtons.querySelectorAll('button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const key = btn.dataset.item;
-        const item = itemData[key];
-        if (!item) return;
-        clickedItems.add(key);
-        showObjectModal(item.description);
-      });
-    });
-
-    nextButton.addEventListener('click', () => {
-      window.location.href = '/nurse-office';
-    });
-
-    let state = 0;
-    dialogBox.addEventListener('click', () => {
-      if (state===0) {
-        roomImage.classList.add('fade-out');
+      window.addEventListener('resize', setViewportSize);
+      window.addEventListener('load', setViewportSize);
+    
+      const choiceButtons = document.getElementById('choice-buttons');
+      const dialogBox = document.getElementById('dialog-box');
+      const roomImage = document.getElementById('room-image');
+      const locationLabel = document.getElementById('location-label');
+      const objectModal = document.getElementById('object-modal');
+      const objectDescText = document.getElementById('object-description-text');
+      const confirmModal = document.getElementById('confirm-acquire-modal');
+      const confirmText = document.getElementById('confirm-acquire-text');
+      const btnOk = document.getElementById('btn-acquire-ok');
+      const btnCancel = document.getElementById('btn-acquire-cancel');
+      const inventoryModal = document.getElementById('inventory-modal');
+      const inventoryList = document.getElementById('inventory-list');
+      const nextButton = document.getElementById('next-button');
+    
+      const wrapper = document.querySelector('.viewport-wrapper');
+      wrapper.classList.add(/android|iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) ? 'mobile-os' : 'desktop-os');
+    
+      const clickedItems = new Set();
+      let currentItem = null;
+    
+      const itemData = {
+        "입구 게시판": {
+          description: "한 달간의 급식 메뉴가 한 번에 적혀 있다. 수요일은 형광 노란색 펜으로 체크되어 있다.",
+          acquirable: false
+        },
+        "배식대": {
+          description: "'자율 배식' 이라는 문구가 적혀 있고, 앞쪽엔 식기류가 쌓여 있다.",
+          acquirable: false
+        },
+        "퇴식구": {
+          description: "소독 스프레이, 물끌개와 행주 등의 청소 도구가 가지런히 놓여 있다.",
+          acquirable: false
+        },
+        "조리실": {
+          dbKey: "가위 1",
+          description: "오래 사용하지 않은 건지 겹쳐진 조리기구마다 먼지가 쌓여있다. 그나마 가위가 멀쩡해보이는 것 같다.",
+          acquirable: true
+        }
+      };
+    
+      window.toggleInventory = () => inventoryModal.classList.toggle('hidden');
+    
+      function showObjectModal(text) {
+        choiceButtons.classList.add('fade-out');
         setTimeout(() => {
-          roomImage.src = '/images/classroom2.jpg';
-          roomImage.classList.remove('fade-out');
-          dialogBox.classList.add('hidden');
-          choiceButtons.classList.remove('hidden');
-          locationLabel.classList.remove('hidden');
+          choiceButtons.classList.add('hidden');
+          objectDescText.innerText = text;
+          objectModal.classList.remove('hidden');
         }, 600);
-        state++;
       }
+    
+      function closeObjectModal() {
+        objectModal.classList.add('hidden');
+        confirmModal.classList.add('hidden');
+        choiceButtons.classList.remove('hidden', 'fade-out');
+        choiceButtons.classList.add('fade-in');
+        setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+        const totalButtons = [...choiceButtons.querySelectorAll('button')].length;
+        if (clickedItems.size >= totalButtons) {
+          nextButton.classList.remove('hidden');
+        }
+      }
+    
+      document.querySelectorAll('#object-modal .modal-backdrop, #object-modal .close-button')
+        .forEach(el => el.addEventListener('click', closeObjectModal));
+      document.querySelector('#object-modal .modal-content')
+        .addEventListener('click', e => e.stopPropagation());
+    
+      document.querySelectorAll('#confirm-acquire-modal .modal-backdrop, #confirm-acquire-modal .close-button')
+        .forEach(el => el.addEventListener('click', closeConfirmModal));
+      document.querySelector('#confirm-acquire-modal .modal-content')
+        .addEventListener('click', e => e.stopPropagation());
+      btnCancel.addEventListener('click', closeConfirmModal);
+    
+      function closeConfirmModal() {
+        confirmModal.classList.add('hidden');
+        closeObjectModal();
+      }
+    
+      choiceButtons.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const label = btn.dataset.item;
+          const cleanedLabel = label.replaceAll('\u00A0', ' ').trim();
+          clickedItems.add(cleanedLabel);
+          currentItem = itemData[cleanedLabel] || null;
+          showObjectModal(currentItem.description);
+        });
+      });
+    
+      document.querySelector('#object-modal .dialog-box').addEventListener('click', () => {
+        if (!currentItem || !currentItem.acquirable) {
+          return closeObjectModal();
+        }
+        confirmModal.dataset.pendingKey = currentItem.dbKey;
+        confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+        confirmModal.classList.remove('hidden');
+      });
+    
+      btnOk.addEventListener('click', async () => {
+        const key = confirmModal.dataset.pendingKey;
+        closeConfirmModal();
+    
+        let json = { success: false, message: "획득에 실패했습니다." };
+        try {
+          const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, { method: 'POST' });
+          json = await resp.json();
+        } catch {}
+    
+        if (json.success) {
+          await loadInventory();
+        } else {
+          alert(json.message);
+        }
+    
+        closeObjectModal();
+      });
+    
+      let state = 0;
+      dialogBox.addEventListener('click', () => {
+        if (state === 0) {
+          roomImage.classList.add('fade-out');
+          setTimeout(() => {
+            roomImage.src = '/images/cafeteria.jpg';
+            roomImage.classList.remove('fade-out');
+            dialogBox.classList.add('hidden');
+            choiceButtons.classList.remove('hidden');
+            locationLabel.classList.remove('hidden');
+          }, 600);
+          state = 1;
+        }
+      });
+    
+      nextButton.addEventListener('click', () => window.location.href = '/nurse-office');
     });
-  </script>
+    </script>
+    
 </body>
 </html>

@@ -10,7 +10,7 @@
 <body>
   <div class="viewport-wrapper">
     <div class="room-container">
-      <img id="room-image" src="/images/classroom1.jpg" alt="방 이미지" class="room-image"/>
+      <img id="room-image" src="/images/scienceroom.jpg" alt="방 이미지" class="room-image"/>
       <div id="location-label" class="location-label hidden">3F 과학실</div>
 
       <div class="ui-overlay">
@@ -147,7 +147,7 @@
         acquirable: false
       },
       "인체 모형": {
-        description: "반신 크기의 인체 모형이다. 배 부분이 뚫려 내장 기관이 보이는 형태며, 인위적으로 강조한 색과 코팅이 어색한 느낌을 준다. 조금 젖어있는 것 같기도…… 하다. 가슴 부분에 마커로 낙서가 되어 있다.\n CODE: QYT9418",
+        description: "반신 크기의 인체 모형이다. 배 부분이 뚫려 내장 기관이 보이는 형태며, 인위적으로 강조한 색과 코팅이 어색한 느낌을 준다. 조금 젖어있는 것 같기도…… 하다. 가슴 부분에 마커로 낙서가 되어 있다.\n\n CODE: QYT9418",
         acquirable: false
       },
       "벽 1": {
@@ -155,8 +155,9 @@
         acquirable: false
       },
       "벽 2": {
-        description: "행거에 한 반 인원수 만큼의 가운이 놓여 있다.",
-        acquirable: false
+        dbKey: "가운",
+        description: "행거에 한 반 인원수 만큼의 가운이 놓여 있다. 다만, 쓸 만한 것은 네 벌 정도다.",
+        acquirable: true
       },
       "책장": {
         description: "과학 서적이 빽빽하게 놓인 이단 책장이다. 책 위 메모장엔 다음과 같이 쓰여 있다. '나가기 위해서 내가 시도해 본 것'",
@@ -171,7 +172,7 @@
       if (state === 0) {
         roomImage.classList.add('fade-out');
         setTimeout(() => {
-          roomImage.src = '/images/classroom2.jpg';
+          roomImage.src = '/images/scienceroom.jpg';
           roomImage.classList.remove('fade-out');
           dialogBox.classList.add('hidden');
           choiceButtons.classList.remove('hidden');

@@ -9,7 +9,7 @@
 <body>
   <div class="viewport-wrapper">
     <div class="room-container">
-      <img id="room-image" src="/images/classroom1.jpg" alt="방 이미지" class="room-image"/>
+      <img id="room-image" src="/images/clubroom3.jpg" alt="방 이미지" class="room-image"/>
       <div id="location-label" class="location-label hidden">2F 연극부실</div>
 
       <div class="ui-overlay">
@@ -128,11 +128,11 @@
           acquirable: true
         },
         "접이식 테이블": {
-          description: "낡아 끝까지 펼쳐지지도 않을 것 같은 테이블이다. 제 혼자 불쾌한 쇳소리를 낸다. 테이블 위 칼자국으로 낙서가 있다. \n CODE: QSE6381",
+          description: "낡아 끝까지 펼쳐지지도 않을 것 같은 테이블이다. 제 혼자 불쾌한 쇳소리를 낸다. 테이블 위 칼자국으로 낙서가 있다. \n\n CODE: QSE6381",
           acquirable: false
         },
         "창고": {
-          dbKey: "가위",
+          dbKey: "가위 2",
           description: "연극에 필요한 의상과 분장 도구, 배경 제작 도구가 있는 작은 창고다. 갖가지 천, 페인팅 붓, 가위, 페인트 등이 정렬되어 있다.",
           acquirable: true
         }
@@ -220,7 +220,7 @@
         if (state === 0) {
           roomImage.classList.add('fade-out');
           setTimeout(() => {
-            roomImage.src = '/images/classroom2.jpg';
+            roomImage.src = '/images/clubroom3.jpg';
             roomImage.classList.remove('fade-out');
             dialogBox.classList.add('hidden');
             choiceButtons.classList.remove('hidden');

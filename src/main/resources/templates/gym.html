@@ -9,7 +9,7 @@
 <body>
   <div class="viewport-wrapper">
     <div class="room-container">
-      <img id="room-image" src="/images/classroom1.jpg" alt="방 이미지" class="room-image"/>
+      <img id="room-image" src="/images/gym.jpg" alt="방 이미지" class="room-image"/>
       <div id="location-label" class="location-label hidden">별관 2F 체육관</div>
 
       <div class="ui-overlay">
@@ -140,7 +140,7 @@
         acquirable: false
       },
       "배구 네트": {
-        description: "녹이 슨 지지대가 네트를 비스듬하게 걸치고 있고, 자세히 살펴보면…… 오른쪽 기둥 아래 무언가가 적혀 있다. \n CODE: QBN4163",
+        description: "녹이 슨 지지대가 네트를 비스듬하게 걸치고 있고, 자세히 살펴보면…… 오른쪽 기둥 아래 무언가가 적혀 있다. \n\n CODE: QBN4163",
         acquirable: false
       },
       "공 바구니": {
@@ -172,7 +172,7 @@
       if (state === 0) {
         roomImage.classList.add('fade-out');
         setTimeout(() => {
-          roomImage.src = '/images/classroom2.jpg';
+          roomImage.src = '/images/gym.jpg';
           roomImage.classList.remove('fade-out');
           dialogBox.classList.add('hidden');
           choiceButtons.classList.remove('hidden');

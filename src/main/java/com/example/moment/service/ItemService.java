@@ -1,7 +1,10 @@
 package com.example.moment.service;
 
 public interface ItemService {
+
+    
     /**
+     * 
      * 현재 사용자가 key 아이템을 이미 획득했는지
      */
     boolean isAcquiredByMe(String key, String username);

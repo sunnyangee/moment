@@ -9,7 +9,7 @@
 <body>
   <div class="viewport-wrapper">
     <div class="room-container">
-      <img id="room-image" src="/images/classroom1.jpg" alt="방 이미지" class="room-image"/>
+      <img id="room-image" src="/images/nurseroom.jpg" alt="방 이미지" class="room-image"/>
       <div id="location-label" class="location-label hidden">1F 보건실</div>
 
       <div class="ui-overlay">
@@ -230,7 +230,7 @@
       if (state === 0) {
         roomImage.classList.add('fade-out');
         setTimeout(() => {
-          roomImage.src = '/images/classroom2.jpg';
+          roomImage.src = '/images/nurseroom.jpg';
           roomImage.classList.remove('fade-out');
           dialogBox.classList.add('hidden');
           choiceButtons.classList.remove('hidden');

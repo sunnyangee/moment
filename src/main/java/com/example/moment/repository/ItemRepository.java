@@ -11,3 +11,4 @@ import com.example.moment.entity.Item;
 public interface ItemRepository extends JpaRepository<Item, Long> {
     Optional<Item> findByName(String name);
 }
+

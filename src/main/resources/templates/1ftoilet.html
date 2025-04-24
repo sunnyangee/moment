@@ -9,12 +9,11 @@
 <body>
   <div class="viewport-wrapper">
     <div class="room-container">
-      <img id="room-image" src="/images/toilet.jpg" alt="방 이미지" class="room-image"/>
-
+      <img id="room-image" src="/images/1ftoilet.jpg" alt="방 이미지" class="room-image"/>
       <div id="location-label" class="location-label hidden">1F 화장실</div>
 
       <div class="ui-overlay">
-        <!-- 1) 선택지 -->
+        <!-- 선택지 -->
         <div id="choice-buttons" class="choice-buttons hidden">
           <button data-item="칸 1">칸 1</button>
           <button data-item="칸 2">칸 2</button>
@@ -24,20 +23,32 @@
           <button data-item="세면대">세면대</button>
         </div>
 
-        <!-- 2) 대화 박스 -->
+        <!-- 대화 박스 -->
         <div id="dialog-box" class="dialog-box">
-          <p id="dialog-text">은근 퀴퀴한 내음이 거부감을 들게 만든다. 구역질을 삼키고 내부를 둘러보면 화장실 칸과 세면대 밖에 없는 곳이다. </p>
+          <p id="dialog-text">은근 퀴퀴한 내음이 거부감을 들게 만든다. 구역질을 삼키고 내부를 둘러보면 화장실 칸과 세면대 밖에 없는 곳이다.</p>
           <div class="dialog-indicator">▼</div>
         </div>
 
-        <!-- 3) 설명 모달 (이미지 제거 버전) -->
+        <!-- 설명 모달 -->
         <div id="object-modal" class="object-modal hidden">
-          <!-- 닫기 버튼 -->
-          <button class="close-button" onclick="closeObjectModal()">X</button>
-          <!-- 설명 박스 전체 클릭 시에도 닫힘 -->
-          <div id="object-description" class="dialog-box">
-            <p id="object-description-text"></p>
-            <div class="dialog-indicator">▼</div>
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">×</button>
+            <div class="dialog-box">
+              <p id="object-description-text"></p>
+              <div class="dialog-indicator">▼</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 획득 확인 모달 -->
+        <div id="confirm-acquire-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">×</button>
+            <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
+            <button id="btn-acquire-ok">확인</button>
+            <button id="btn-acquire-cancel">취소</button>
           </div>
         </div>
       </div>
@@ -47,124 +58,171 @@
         <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
       </button>
       <div id="inventory-modal" class="inventory-modal hidden">
-        <button class="close-button" onclick="toggleInventory()">X</button>
-        <h3>인벤토리</h3>
-        <ul id="inventory-list"></ul>
+        <div class="modal-backdrop" onclick="toggleInventory()"></div>
+        <div class="modal-content">
+          <button class="close-button" onclick="toggleInventory()">×</button>
+          <h3>인벤토리</h3>
+          <ul id="inventory-list"></ul>
+        </div>
       </div>
 
-      <!-- NEXT 버튼 -->
+      <!-- NEXT -->
       <button id="next-button" class="next-button hidden">NEXT</button>
     </div>
   </div>
 
-  <script>
-    async function loadInventory() {
-      try {
-        const resp = await fetch('/api/items');
-        if (!resp.ok) throw new Error(resp.status);
-        const items = await resp.json();
-        const ul = document.getElementById('inventory-list');
-        ul.innerHTML = '';
-        items.forEach(item => {
-          const li = document.createElement('li');
-          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
-          ul.appendChild(li);
-        });
-      } catch (e) {
-        console.error('인벤토리 로드 실패', e);
+  <!-- ✅ 불필요한 약 수납장 조건 및 열쇠 소비 로직 제거된 전체 코드 -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      async function loadInventory() {
+        try {
+          const resp = await fetch('/api/items');
+          if (!resp.ok) throw new Error(resp.status);
+          const items = await resp.json();
+          const ul = document.getElementById('inventory-list');
+          ul.innerHTML = '';
+          items.forEach(item => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+            ul.appendChild(li);
+          });
+        } catch (e) {
+          console.error('인벤토리 로드 실패', e);
+        }
       }
-    }
-
-    function setViewportSize() {
-      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
-    }
-    window.addEventListener('resize', setViewportSize);
-    window.addEventListener('load', () => {
-      setViewportSize();
+    
       loadInventory();
-    });
-
-    const wrapper         = document.querySelector('.viewport-wrapper');
-    const ua              = navigator.userAgent.toLowerCase();
-    const dialogBox       = document.getElementById('dialog-box');
-    const locationLabel   = document.getElementById('location-label');
-    const choiceButtons   = document.getElementById('choice-buttons');
-    const roomImage       = document.getElementById('room-image');
-    const objectModal     = document.getElementById('object-modal');
-    const objectDescText  = document.getElementById('object-description-text');
-    const nextButton      = document.getElementById('next-button');
-    const inventoryModal  = document.getElementById('inventory-modal');
-
-    wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
-
-    const clickedItems = new Set();
-    const itemData = {
-      "칸 1":      { description: "내부에는 아무도 없다. 생활감이 다분한 이 곳에서 왜인지 서늘한 공기가 감돈다.",                acquirable: false },
-      "칸 2":      { description: "내부에는 아무도 없다. 생활감이 다분한 이 곳에서 왜인지 서늘한 공기가 감돈다.",                acquirable: false },
-      "칸 3":      { description: "내부에는 아무도 없다. 생활감이 다분한 이 곳에서 왜인지 서늘한 공기가 감돈다.",                acquirable: false },
-      "칸 4":      { description: "내부에는 아무도 없다. 생활감이 다분한 이 곳에서 왜인지 서늘한 공기가 감돈다.",                acquirable: false },
-      "거울":  { description: "거울을 바라보면 익숙하지만 조금은, 앳되어 보이는 얼굴이 보인다.",             acquirable: false },
-      "세면대":      { description: "단수가 된 건지 메마른 상태이다. 배수구 부분에 옅게 남은 갈색빛 자국이 눈에 들어오나 연식 때문인 것 같다.",            acquirable: false }
-    };
-    const totalItems = Object.keys(itemData).length;
-
-    function toggleInventory() {
-      inventoryModal.classList.toggle('hidden');
-    }
-    window.toggleInventory = toggleInventory;
-
-    function showObjectModal(text) {
-      choiceButtons.classList.add('fade-out');
-      setTimeout(() => {
-        choiceButtons.classList.add('hidden');
-        objectDescText.innerText = text;
-        objectModal.classList.remove('hidden');
-      }, 600);
-    }
-
-    function closeObjectModal() {
-      objectModal.classList.add('hidden');
-      choiceButtons.classList.remove('hidden','fade-out');
-      choiceButtons.classList.add('fade-in');
-      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
-      if (clickedItems.size === totalItems) {
-        nextButton.classList.remove('hidden');
+    
+      function setViewportSize() {
+        document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
       }
-    }
-
-    let state = 0;
-    dialogBox.addEventListener('click', () => {
-      if (state === 0) {
-        roomImage.classList.add('fade-out');
+      window.addEventListener('resize', setViewportSize);
+      window.addEventListener('load', setViewportSize);
+    
+      const choiceButtons = document.getElementById('choice-buttons');
+      const dialogBox = document.getElementById('dialog-box');
+      const roomImage = document.getElementById('room-image');
+      const locationLabel = document.getElementById('location-label');
+      const objectModal = document.getElementById('object-modal');
+      const objectDescText = document.getElementById('object-description-text');
+      const confirmModal = document.getElementById('confirm-acquire-modal');
+      const confirmText = document.getElementById('confirm-acquire-text');
+      const btnOk = document.getElementById('btn-acquire-ok');
+      const btnCancel = document.getElementById('btn-acquire-cancel');
+      const inventoryModal = document.getElementById('inventory-modal');
+      const inventoryList = document.getElementById('inventory-list');
+      const nextButton = document.getElementById('next-button');
+    
+      const wrapper = document.querySelector('.viewport-wrapper');
+      wrapper.classList.add(/android|iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) ? 'mobile-os' : 'desktop-os');
+    
+      const clickedItems = new Set();
+      let currentItem = null;
+    
+      const itemData = {
+        "칸 1":      { description: "내부에는 아무도 없다. 생활감이 다분한 이 곳에서 왜인지 서늘한 공기가 감돈다.",                acquirable: false },
+        "칸 2":      { dbKey: "초코바", description: "누군가가 숨겨둔 초코바가 쓰레기통 뒤쪽에서 발견된다. 왜인지 겉포장지가 젖어 있는 것 같은데, 착각이겠지?",                acquirable: true },
+        "칸 3":      { description: "내부에는 아무도 없다. 생활감이 다분한 이 곳에서 왜인지 서늘한 공기가 감돈다.",                acquirable: false },
+        "칸 4":      { dbKey: "렌치", description: "뒤쪽 환풍구가 뜯겨 있고, 그 앞으로 어그러진 미니 팬치와 비교적 괜찮은 렌치가 보인다. ",                acquirable: true },
+        "거울":  { description: "거울을 바라보면 익숙하지만 조금은, 앳되어 보이는 얼굴이 보인다.",             acquirable: false },
+        "세면대":      { description: "단수가 된 건지 메마른 상태이다. 배수구 부분에 옅게 남은 갈색빛 자국이 눈에 들어오나 연식 때문인 것 같다.",            acquirable: false }
+      };
+    
+      window.toggleInventory = () => inventoryModal.classList.toggle('hidden');
+    
+      function showObjectModal(text) {
+        choiceButtons.classList.add('fade-out');
         setTimeout(() => {
-          roomImage.src = '/images/toilet.jpg';
-          roomImage.classList.remove('fade-out');
-          dialogBox.classList.add('hidden');
-          choiceButtons.classList.remove('hidden');
-          locationLabel.classList.remove('hidden');
+          choiceButtons.classList.add('hidden');
+          objectDescText.innerText = text;
+          objectModal.classList.remove('hidden');
         }, 600);
-        state++;
       }
-    });
-
-    document.querySelectorAll('#choice-buttons button').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        const key = btn.dataset.item;
-        const item = itemData[key];
-        if (!item) return;
-        clickedItems.add(key);
-        showObjectModal(item.description);
+    
+      function closeObjectModal() {
+        objectModal.classList.add('hidden');
+        confirmModal.classList.add('hidden');
+        choiceButtons.classList.remove('hidden', 'fade-out');
+        choiceButtons.classList.add('fade-in');
+        setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+        const totalButtons = [...choiceButtons.querySelectorAll('button')].length;
+        if (clickedItems.size >= totalButtons) {
+          nextButton.classList.remove('hidden');
+        }
+      }
+    
+      document.querySelectorAll('#object-modal .modal-backdrop, #object-modal .close-button')
+        .forEach(el => el.addEventListener('click', closeObjectModal));
+      document.querySelector('#object-modal .modal-content')
+        .addEventListener('click', e => e.stopPropagation());
+    
+      document.querySelectorAll('#confirm-acquire-modal .modal-backdrop, #confirm-acquire-modal .close-button')
+        .forEach(el => el.addEventListener('click', closeConfirmModal));
+      document.querySelector('#confirm-acquire-modal .modal-content')
+        .addEventListener('click', e => e.stopPropagation());
+      btnCancel.addEventListener('click', closeConfirmModal);
+    
+      function closeConfirmModal() {
+        confirmModal.classList.add('hidden');
+        closeObjectModal();
+      }
+    
+      choiceButtons.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const label = btn.dataset.item;
+          const cleanedLabel = label.replaceAll('\u00A0', ' ').trim();
+          clickedItems.add(cleanedLabel);
+          currentItem = itemData[cleanedLabel] || null;
+          showObjectModal(currentItem.description);
+        });
       });
+    
+      document.querySelector('#object-modal .dialog-box').addEventListener('click', () => {
+        if (!currentItem || !currentItem.acquirable) {
+          return closeObjectModal();
+        }
+        confirmModal.dataset.pendingKey = currentItem.dbKey;
+        confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+        confirmModal.classList.remove('hidden');
+      });
+    
+      btnOk.addEventListener('click', async () => {
+        const key = confirmModal.dataset.pendingKey;
+        closeConfirmModal();
+    
+        let json = { success: false, message: "획득에 실패했습니다." };
+        try {
+          const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, { method: 'POST' });
+          json = await resp.json();
+        } catch {}
+    
+        if (json.success) {
+          await loadInventory();
+        } else {
+          alert(json.message);
+        }
+    
+        closeObjectModal();
+      });
+    
+      let state = 0;
+      dialogBox.addEventListener('click', () => {
+        if (state === 0) {
+          roomImage.classList.add('fade-out');
+          setTimeout(() => {
+            roomImage.src = '/images/1ftoilet.jpg';
+            roomImage.classList.remove('fade-out');
+            dialogBox.classList.add('hidden');
+            choiceButtons.classList.remove('hidden');
+            locationLabel.classList.remove('hidden');
+          }, 600);
+          state = 1;
+        }
+      });
+    
+      nextButton.addEventListener('click', () => window.location.href = '/audiovisualroom');
     });
-
-    objectModal.addEventListener('click', closeObjectModal);
-    objectModal.querySelector('.close-button').addEventListener('click', closeObjectModal);
-    objectModal.querySelector('#object-description').addEventListener('click', closeObjectModal);
-
-    nextButton.addEventListener('click', () => {
-      window.location.href = '/audiovisualroom';
-    });
-  </script>
+    </script>
+    
 </body>
 </html>
