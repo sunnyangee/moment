@@ -94,6 +94,7 @@
         console.error('인벤토리 로드 실패', e);
       }
     }
+
     loadInventory();
 
     function toggleInventory() {
@@ -102,12 +103,13 @@
 
     function closeObjectModal() {
       document.getElementById('object-modal').classList.add('hidden');
-      document.getElementById('open-password-btn').classList.add('hidden');
       document.getElementById('confirm-acquire-modal').classList.add('hidden');
       choiceButtons.classList.remove('fade-out', 'hidden');
       choiceButtons.classList.add('fade-in');
-      paperChoiceButtons.classList.add('hidden');
       setTimeout(()=> choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size === totalItems) {
+        nextButton.classList.remove('hidden');
+      }
     }
 
     const choiceButtons = document.getElementById('choice-buttons');
@@ -152,16 +154,10 @@
 
     // 초기 대화
     dialogBox.addEventListener('click', () => {
-      if (libraryPasswordUnlocked) {
-        libraryPasswordUnlocked = false;
-        dialogBox.classList.add('hidden');
-        choiceButtons.classList.remove('hidden');
-        return;
-      }
       if (state === 0) {
         roomImage.classList.add('fade-out');
         setTimeout(() => {
-          roomImage.src = '/images/library.jpg';
+          roomImage.src = '/images/overnightroom.jpg';
           roomImage.classList.remove('fade-out');
           dialogBox.classList.add('hidden');
           choiceButtons.classList.remove('hidden');

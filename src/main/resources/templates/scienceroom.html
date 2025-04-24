@@ -30,6 +30,7 @@
             <p>잠금 장치가 붙어 있는 책장입니다. 영문 키패드를 입력하세요.</p>
             <input type="text" id="password-input" placeholder="영문" maxlength="20"/>
             <button id="password-submit">확인</button>
+            <button class="close-button">×</button>
           </div>
         </div>
 
@@ -41,18 +42,21 @@
 
         <!-- 설명 모달 -->
         <div id="object-modal" class="object-modal hidden">
-          <button class="close-button" onclick="closeObjectModal()">X</button>
-          <div id="object-description" class="dialog-box">
-            <p id="object-description-text"></p>
-            <div class="dialog-indicator">▼</div>
+          <button class="close-button" onclick="closeObjectModal()">×</button>
+          <div class="modal-backdrop"></div>
+          <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="dialog-box">
+              <p id="object-description-text"></p>
+              <div class="dialog-indicator">▼</div>
+            </div>
           </div>
         </div>
 
         <!-- 획득 확인 모달 -->
         <div id="confirm-acquire-modal" class="modal hidden">
           <div class="modal-backdrop"></div>
-          <div class="modal-content">
-            <button class="close-button">&times;</button>
+          <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="close-button">×</button>
             <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
             <button id="btn-acquire-ok">확인</button>
             <button id="btn-acquire-cancel">취소</button>
@@ -65,9 +69,12 @@
         <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
       </button>
       <div id="inventory-modal" class="inventory-modal hidden">
-        <button class="close-button" onclick="toggleInventory()">X</button>
-        <h3>인벤토리</h3>
-        <ul id="inventory-list"></ul>
+        <div class="modal-backdrop" onclick="toggleInventory()"></div>
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <button class="close-button" onclick="toggleInventory()">×</button>
+          <h3>인벤토리</h3>
+          <ul id="inventory-list"></ul>
+        </div>
       </div>
 
       <!-- NEXT 버튼 -->
@@ -76,6 +83,7 @@
   </div>
 
   <script>
+    // 인벤토리 로드
     async function loadInventory() {
       try {
         const resp = await fetch('/api/items');
@@ -94,21 +102,7 @@
     }
     loadInventory();
 
-    function toggleInventory() {
-      document.getElementById('inventory-modal').classList.toggle('hidden');
-    }
-
-    function closeObjectModal() {
-      objectModal.classList.add('hidden');
-      confirmModal.classList.add('hidden');
-      choiceButtons.classList.remove('fade-out', 'hidden');
-      choiceButtons.classList.add('fade-in');
-      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
-      if (clickedItems.size === totalItems) {
-        nextButton.classList.remove('hidden');
-      }
-    }
-
+    // DOM 참조
     const choiceButtons    = document.getElementById('choice-buttons');
     const dialogBox        = document.getElementById('dialog-box');
     const dialogText       = document.getElementById('dialog-text');
@@ -121,28 +115,31 @@
     const btnOk            = document.getElementById('btn-acquire-ok');
     const btnCancel        = document.getElementById('btn-acquire-cancel');
     const nextButton       = document.getElementById('next-button');
-
     const passwordModal    = document.getElementById('password-modal');
     const passwordInput    = document.getElementById('password-input');
     const passwordSubmit   = document.getElementById('password-submit');
+    const closePwdBtns     = passwordModal.querySelectorAll('.close-button');
+
+    // 기초 설정
+    const wrapper = document.querySelector('.viewport-wrapper');
+    wrapper.classList.add(/android|iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase())
+      ? 'mobile-os' : 'desktop-os'
+    );
 
     const clickedItems     = new Set();
     let currentItem        = null;
-    const passwordAnswer   = "tale";
-
-    const wrapper = document.querySelector('.viewport-wrapper');
-    wrapper.classList.add(/android|iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) ? 'mobile-os' : 'desktop-os');
-
+    const passwordAnswer   = 'tale';
     const itemData = {
-      "실험대": { description: "실험을 수행할 수 있는 넓은 작업 공간으로, 옅은 얼룩이 진 가운 두어벌이 구겨진 채 올라가 있다.", acquirable: false },
-      "세면대": { description: "금이 간 비커가 놓여져 있다. 투명한 무언가가 안에 들어있는데, 맡아보면 코 끝이 저릿하도록 시원한 느낌이 확 풍긴다. 짐작건대, 아마 과산화수소?", acquirable: false },
-      "인체 모형": { description: "반신 크기의 인체 모형이다. 배 부분이 뚫려 내장 기관이 보이는 형태며, 인위적으로 강조한 색과 코팅이 어색한 느낌을 준다. 조금 젖어있는 것 같기도…… 하다. 가슴 부분에 마커로 낙서가 되어 있다.\n\n CODE: QYT9418", acquirable: false },
-      "벽 1": { description: "벽걸이에 안전한 실험을 위한 고글이 걸려 있다. 넉넉하게 서른 개 즈음이 걸린 듯하다.", acquirable: false },
-      "벽 2": { dbKey: "가운", description: "행거에 한 반 인원수 만큼의 가운이 놓여 있다. 다만, 쓸 만한 것은 네 벌 정도다.", acquirable: true },
-      "책장": { description: "과학 서적이 빽빽하게 놓인 이단 책장이다. 책 위 메모장엔 다음과 같이 쓰여 있다. '나가기 위해서 내가 시도해 본 것'", acquirable: false }
+      '실험대':    { description: '실험을 수행할 수 있는 넓은 작업 공간으로, 옅은 얼룩이 진 가운 두어벌이 구겨진 채 올라가 있다.', acquirable: false },
+      '세면대':    { description: '금이 간 비커가 놓여져 있다. 투명한 무언가가 안에 들어있는데, 맡아보면 코 끝이 저릿하도록 시원한 느낌이 확 풍긴다. 짐작건대, 아마 과산화수소?', acquirable: false },
+      '인체 모형': { description: '반신 크기의 인체 모형이다. 배 부분이 뚫려 내장 기관이 보이는 형태며, 인위적으로 강조한 색과 코팅이 어색한 느낌을 준다. 조금 젖어있는 것 같기도…… 하다. 가슴 부분에 마커로 낙서가 되어 있다.\n\n CODE: QYT9418', acquirable: false },
+      '벽 1':     { description: '벽걸이에 안전한 실험을 위한 고글이 걸려 있다. 넉넉하게 서른 개 즈음이 걸린 듯하다.', acquirable: false },
+      '벽 2':     { dbKey: '가운', description: '행거에 한 반 인원수 만큼의 가운이 놓여 있다. 다만, 쓸 만한 것은 네 벌 정도다.', acquirable: true },
+      '책장':     { description: '과학 서적이 빽빽하게 놓인 이단 책장이다. 책 위 메모장엔 다음과 같이 쓰여 있다. \'나가기 위해서 내가 시도해 본 것\'', acquirable: false }
     };
     const totalItems = Object.keys(itemData).length;
 
+    // 초기 대화 띄우기
     let state = 0;
     dialogBox.addEventListener('click', () => {
       if (state === 0) {
@@ -158,22 +155,18 @@
       }
     });
 
-    document.querySelectorAll('#choice-buttons button').forEach(btn => {
+    // 선택지 클릭
+    choiceButtons.querySelectorAll('button').forEach(btn => {
       btn.addEventListener('click', () => {
-        const key  = btn.dataset.item;
+        const key = btn.dataset.item;
         const info = itemData[key];
         if (!info) return;
-
         clickedItems.add(key);
         currentItem = info;
-
-        if (key === "책장") {
-          choiceButtons.classList.add('hidden');
+        if (key === '책장') {
           passwordModal.classList.remove('hidden');
-          passwordInput.value = "";
           return;
         }
-
         choiceButtons.classList.add('fade-out');
         setTimeout(() => {
           choiceButtons.classList.add('hidden');
@@ -183,63 +176,75 @@
       });
     });
 
+    // 책장 암호 입력
     passwordSubmit.addEventListener('click', () => {
       if (passwordInput.value.trim().toLowerCase() === passwordAnswer) {
         passwordModal.classList.add('hidden');
-        objectDescText.innerText = itemData["책장"].description;
+        dialogBox.classList.add('hidden');
+        objectDescText.innerText = itemData['책장'].description;
         objectModal.classList.remove('hidden');
       } else {
-        alert("비밀번호가 틀렸습니다.");
-        passwordInput.value = "";
+        alert('비밀번호가 틀렸습니다.');
+        passwordInput.value = '';
       }
     });
+    closePwdBtns.forEach(btn => btn.addEventListener('click', () => passwordModal.classList.add('hidden')));
 
+    // object-modal 클릭
+    objectModal.querySelector('.modal-backdrop').addEventListener('click', closeObjectModal);
+    objectModal.querySelector('.close-button').addEventListener('click', closeObjectModal);
+    objectModal.querySelector('.modal-content').addEventListener('click', e => e.stopPropagation());
     objectModal.addEventListener('click', () => {
-      if (!currentItem || !currentItem.acquirable) {
-        return closeObjectModal();
-      }
+      if (!currentItem.acquirable) return closeObjectModal();
       confirmModal.dataset.pendingKey = currentItem.dbKey;
       confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
       confirmModal.classList.remove('hidden');
     });
 
+    // 획득 확인
+    function closeConfirmModal() {
+      confirmModal.classList.add('hidden');
+      closeObjectModal();
+    }
+    document.querySelector('#confirm-acquire-modal .modal-backdrop').addEventListener('click', closeConfirmModal);
+    document.querySelector('#confirm-acquire-modal .close-button').addEventListener('click', closeConfirmModal);
+    btnCancel.addEventListener('click', closeConfirmModal);
     btnOk.addEventListener('click', async () => {
       const key = confirmModal.dataset.pendingKey;
-      closeObjectModal();
-      let json = { success: false };
+      closeConfirmModal();
+      let json = { success: false, message: '획득에 실패했습니다.' };
       try {
         const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, { method: 'POST' });
         json = await resp.json();
       } catch {}
-      if (json.success) {
-        await loadInventory();
-      } else {
-        alert(json.message);
-      }
+      if (json.success) await loadInventory(); else alert(json.message);
     });
 
-    function closePasswordModal() {
-      passwordModal.classList.add('hidden');
-      choiceButtons.classList.remove('hidden');
-      if (clickedItems.size === totalItems) {
-        nextButton.classList.remove('hidden');
-      }
+    // closeObjectModal 정의
+    function closeObjectModal() {
+      dialogBox.classList.remove('hidden');
+      objectModal.classList.add('hidden');
+      confirmModal.classList.add('hidden');
+      choiceButtons.classList.remove('fade-out');
+      choiceButtons.classList.toggle('hidden', false);
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size === totalItems) nextButton.classList.remove('hidden');
     }
 
+    // 후속 대사 및 NEXT
     const nextDialogues = [
-      "이곳에서 나가려거든 여길 활용해야 한다는 생각이 선명해진다.",
-      "메모장을 자세히 살피기 위해 손을 뻗을 적, 실수로 책장의 문을 더 열어젖히며 근처 선반에 놓여 있던 용액의 비커가 돌연 바닥으로 떨어지면서 산산조각이 난다.",
-      "흩뿌려진 액체에서 연기가 피어오르더니 순식간에 장내를 뒤덮어 버린다."
+      '이곳에서 나가려거든 여길 활용해야 한다는 생각이 선명해진다.',
+      '메모장을 자세히 살피기 위해 손을 뻗을 적, 실수로 책장의 문을 더 열어젖히며 근처 선반에 놓여 있던 용액의 비커가 돌연 바닥으로 떨어지면서 산산조각이 난다.',
+      '흩뿌려진 액체에서 연기가 피어오르더니 순식간에 장내를 뒤덮어 버린다.'
     ];
     let nextIdx = 0;
-
     nextButton.addEventListener('click', () => {
       choiceButtons.classList.add('hidden');
       nextButton.classList.add('hidden');
       dialogText.innerText = nextDialogues[nextIdx++];
       dialogBox.classList.remove('hidden');
     });
-
     dialogBox.addEventListener('click', () => {
       if (nextIdx < nextDialogues.length) {
         dialogText.innerText = nextDialogues[nextIdx++];
@@ -247,12 +252,6 @@
         window.location.href = '/다음페이지';
       }
     });
-
-    passwordModal.querySelector('.modal-backdrop')
-      .addEventListener('click', closePasswordModal);
-    passwordModal.querySelector('.close-button')
-      .addEventListener('click', closePasswordModal);
-    btnCancel.addEventListener('click', closeObjectModal);
   </script>
 </body>
 </html>
