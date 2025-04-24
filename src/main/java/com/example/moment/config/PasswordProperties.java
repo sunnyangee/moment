@@ -3,6 +3,8 @@ package com.example.moment.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +16,11 @@ public class PasswordProperties {
      * key  = roomId
      * value = 실제 암호
      */
+    
+    @PostConstruct
+    public void logLoaded() {
+        System.out.println("🔑 Loaded password keys: " + map.keySet());
+    }
     private Map<String, String> map = new HashMap<>();
 
     public Map<String, String> getMap() {
