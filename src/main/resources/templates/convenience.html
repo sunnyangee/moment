@@ -121,26 +121,24 @@
     wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
 
     const itemData = {
-      "카운터": {
-        description: "전원이 꺼진 포스기와 작은 금고가 딸려 있다. 열쇠는 없어 열 수 없을 것 같다.",
-        acquirable: false
-      },
-      "냉장 쇼케이스": {
-        dbKey: "생수",
-        description: "생수와 음료수들이 열 맞춰 놓여 있다. ",
+      "진열대": {
+        dbKey: "생수 2", 
+        description: "쓰러진 매대에 과자 부스러기와 먼지가 끼인 생수 몇 병이 누워 있다. 특별한 건 없어 보이지만, 무언가 급히 훑어간 흔적이 남아 있다.",
         acquirable: true
       },
-      "냉동 쇼케이스": {
-        description: "다 녹아버린 닭강정과 만두에서 물이 질질 흘러나온다. ",
+      "냉장고": {
+        dbKey: "편의점 수첩",
+        description: "꺼진 냉장고 안 물건이 전부 쓰러져 있다. 제일 하단 구석 틈 끼워진 작은 물건 하나가 보인다.",
+        acquirable: true
+      },
+      "쓰레기통": {
+        description: "구석에 놓인 쓰레기통 안의 물건들이 이상하리만치 정갈히 정돈되어 있다.",
         acquirable: false
       },
-      "실온 코너": {
-        description: "빵과 과자가 놓여 있다. 각각의 유통기한이 '2015.02.07', '2015.09.23' 인데…… 자세히 보니 하얀 곰팡이가 피어 있다. ",
-        acquirable: false
-      },
-      "간이 테이블과 접이식 의자 ": {
-        description: "쨍한 초록빛의 테이블과 의자다. 플라스틱 재질이라 튼튼해보이진 않는다. ",
-        acquirable: false
+      "계산대": {
+        dbKey: "손전등 2",
+        description: "포스기기 옆쪽으로 소화기와 비상용 손전등이 걸려 있다.",
+        acquirable: true
       }
     };
 
@@ -206,7 +204,7 @@
 
     let state = 0;
     nextButton.addEventListener('click', () => {
-      window.location.href = '/clubroom7';
+      window.location.href = '/atm';
     });
   </script>
 </body>
