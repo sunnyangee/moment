@@ -176,7 +176,8 @@
         currentItem = info;
         if (key === "도서관 데스크") {
           choiceButtons.classList.add('hidden');
-          paperChoiceButtons.classList.remove('hidden');
+          paperChoiceButtons.classList.add('hidden');
+          passwordModal.classList.remove('hidden');
           return;
         }
         choiceButtons.classList.add('fade-out');
@@ -195,10 +196,14 @@
 
     // 노트북 설명 후 암호 입력 흐름
     openPasswordBtn.addEventListener('click', () => {
+      // 뒤에 깔린 선택지 전부 숨기고
       objectModal.classList.add('hidden');
       openPasswordBtn.classList.add('hidden');
+      choiceButtons.classList.add('hidden');
+      paperChoiceButtons.classList.add('hidden');
       passwordModal.classList.remove('hidden');
     });
+
 
     paperChoiceButtons.querySelectorAll('button').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -226,11 +231,11 @@
         });
 
         if (resp.ok) {
-          // 성공 시: 모달 닫고, 설명・다이얼로그 띄우기
+          // 암호맞으면 모달 닫고, 선택지 전부 숨긴 뒤 대화 상자 띄우기
           passwordModal.classList.add('hidden');
           choiceButtons.classList.add('hidden');
           paperChoiceButtons.classList.add('hidden');
-          dialogText.innerText = "미처 끄지 않은 메모장을 확인할 수 있다.\n\nCODE: QHL7492";
+          dialogText.innerText = "…";
           dialogBox.classList.remove('hidden');
         } else {
           // 실패 시
@@ -251,7 +256,14 @@
     });
     btnCancel.addEventListener('click', closeObjectModal);
 
-    nextButton.addEventListener('click', () => { window.location.href='/teachersroom'; });
+    nextButton.addEventListener('click', () => {
+      // NEXT 메시지 나올 때 선택지는 무조건 숨김
+      choiceButtons.classList.add('hidden');
+      paperChoiceButtons.classList.add('hidden');
+       if (nextIdx < nextDialogues.length) {
+         nextButton.innerText = nextDialogues[nextIdx++];
+       }
+    });
 
     function closePasswordModal() { passwordModal.classList.add('hidden'); choiceButtons.classList.remove('hidden'); }
   </script>
