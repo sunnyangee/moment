@@ -16,7 +16,7 @@ import java.util.List;
 public class HomeController {
 
     private static final List<String> SEQUENCE = List.of(
-        "start", "3-2", "3-3", "homeroom", "cafeteria", "nurse-office", "principalsoffice", "1ftoilet", "audiovisualroom", "overnightroom", "counselingroom", "1felevator", "1fstairs", "library", "teachersroom", "computerroom", "clubroom1", "clubroom2", "clubroom3", "artroom", "broadcastingroom", "studentcouncilroom", "bridge", "gym", "gym2f", "clubroom4", "clubroom5", "clubroom6", "stairs2f", "musicroom", "conveniencestore", "clubroom7", "clubroom8", "englishroom", "supplyroom", "scienceroom"
+        "start", "3-2", "3-3", "homeroom", "cafeteria", "nurse-office", "principalsoffice", "1ftoilet", "audiovisualroom", "overnightroom", "counselingroom", "1felevator", "1fstairs", "library", "teachersroom", "computerroom", "clubroom1", "clubroom2", "clubroom3", "artroom", "broadcastingroom", "studentcouncilroom", "bridge", "gym", "gym2f", "clubroom4", "clubroom5", "clubroom6", "stairs2f", "musicroom", "conveniencestore", "clubroom7", "clubroom8", "englishroom", "supplyroom", "scienceroom", "powersupplyroom"
     );
 
     private final ProgressService progressService;
@@ -210,9 +210,14 @@ public class HomeController {
     public String supplyroom(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
         return handleStage("supplyroom", userPrincipal, model);
     }
-@GetMapping("/scienceroom") // ← 하이픈 없이
+    @GetMapping("/scienceroom") // ← 하이픈 없이
     public String scienceroom(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
         return handleStage("scienceroom", userPrincipal, model);
+    }
+
+    @GetMapping("/powersupplyroom") // ← 하이픈 없이
+    public String powersupplyroom(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("powersupplyroom", userPrincipal, model);
     }
 
 
