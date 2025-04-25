@@ -33,7 +33,6 @@
                    placeholder="insert here"
                    maxlength="20"/>
             <button id="keypad-submit">확인</button>
-            <button class="close-button">×</button>
           </div>
         </div>
 
@@ -210,7 +209,7 @@
     keypadSubmit.addEventListener('click', async ()=>{
       const answer = keypadInput.value.trim();
       try {
-        const resp = await fetch('/api/check-password/powerroom', {
+        const resp = await fetch('/api/check-password/powersupplyroom', {
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body: JSON.stringify({answer})

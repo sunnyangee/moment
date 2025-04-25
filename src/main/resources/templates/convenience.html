@@ -1,0 +1,213 @@
+<!-- ✅ 수정된 HTML (숙직실) -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>편의점</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/conveniencestore.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">B1 편의점</div>
+
+      <div class="ui-overlay">
+        <!-- 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="진열대">진열대</button>
+          <button data-item="냉장고">냉장고</button>
+          <button data-item="쓰레기통">쓰레기통</button>
+          <button data-item="계산대">계산대</button>
+        </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">바로 옆 간판으로 향한다. 자동문은 열리지 않는다. 유리문 사이에 손을 밀어 넣어 억지로 열어야 했다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <!-- 설명 모달 -->
+        <div id="object-modal" class="object-modal hidden">
+          <button class="close-button" onclick="closeObjectModal()">X</button>
+          <div id="object-description" class="dialog-box">
+            <p id="object-description-text"></p>
+            <div class="dialog-indicator">▼</div>
+          </div>
+        </div>
+
+        <!-- 획득 확인 모달 -->
+        <div id="confirm-acquire-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
+            <button id="btn-acquire-ok">확인</button>
+            <button id="btn-acquire-cancel">취소</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button" onclick="toggleInventory()">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <button class="close-button" onclick="toggleInventory()">X</button>
+        <h3>인벤토리</h3>
+        <ul id="inventory-list"></ul>
+      </div>
+
+      <!-- NEXT 버튼 -->
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        const ul = document.getElementById('inventory-list');
+        ul.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          ul.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+
+    loadInventory();
+
+    function toggleInventory() {
+      document.getElementById('inventory-modal').classList.toggle('hidden');
+    }
+
+    function closeObjectModal() {
+      document.getElementById('object-modal').classList.add('hidden');
+      document.getElementById('confirm-acquire-modal').classList.add('hidden');
+      choiceButtons.classList.remove('fade-out', 'hidden');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size === totalItems) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+
+    const choiceButtons = document.getElementById('choice-buttons');
+    const dialogBox = document.getElementById('dialog-box');
+    const locationLabel = document.getElementById('location-label');
+    const roomImage = document.getElementById('room-image');
+    const objectModal = document.getElementById('object-modal');
+    const objectDescText = document.getElementById('object-description-text');
+    const nextButton = document.getElementById('next-button');
+    const inventoryModal = document.getElementById('inventory-modal');
+    const inventoryList = document.getElementById('inventory-list');
+    const confirmModal = document.getElementById('confirm-acquire-modal');
+    const confirmText = document.getElementById('confirm-acquire-text');
+    const btnOk = document.getElementById('btn-acquire-ok');
+    const btnCancel = document.getElementById('btn-acquire-cancel');
+
+    const clickedItems = new Set();
+    let currentItem = null;
+
+    const wrapper = document.querySelector('.viewport-wrapper');
+    const ua = navigator.userAgent.toLowerCase();
+    wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
+
+    const itemData = {
+      "카운터": {
+        description: "전원이 꺼진 포스기와 작은 금고가 딸려 있다. 열쇠는 없어 열 수 없을 것 같다.",
+        acquirable: false
+      },
+      "냉장 쇼케이스": {
+        dbKey: "생수",
+        description: "생수와 음료수들이 열 맞춰 놓여 있다. ",
+        acquirable: true
+      },
+      "냉동 쇼케이스": {
+        description: "다 녹아버린 닭강정과 만두에서 물이 질질 흘러나온다. ",
+        acquirable: false
+      },
+      "실온 코너": {
+        description: "빵과 과자가 놓여 있다. 각각의 유통기한이 '2015.02.07', '2015.09.23' 인데…… 자세히 보니 하얀 곰팡이가 피어 있다. ",
+        acquirable: false
+      },
+      "간이 테이블과 접이식 의자 ": {
+        description: "쨍한 초록빛의 테이블과 의자다. 플라스틱 재질이라 튼튼해보이진 않는다. ",
+        acquirable: false
+      }
+    };
+
+    const totalItems = Object.keys(itemData).length;
+
+    dialogBox.addEventListener('click', () => {
+      if (state === 0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(() => {
+          roomImage.src = '/images/conveniencestore.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        }, 600);
+        state++;
+      }
+    });
+
+    document.querySelectorAll('#choice-buttons button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.item;
+        const info = itemData[key];
+        if (!info) return;
+        clickedItems.add(key);
+        currentItem = info;
+        choiceButtons.classList.add('fade-out');
+        setTimeout(() => {
+          choiceButtons.classList.add('hidden');
+          objectDescText.innerText = info.description;
+          objectModal.classList.remove('hidden');
+        }, 600);
+      });
+    });
+
+    objectModal.addEventListener('click', () => {
+      if (!currentItem || !currentItem.acquirable) {
+        return closeObjectModal();
+      }
+      confirmModal.dataset.pendingKey = currentItem.dbKey;
+      confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+      confirmModal.classList.remove('hidden');
+    });
+
+    btnOk.addEventListener('click', async () => {
+      const key = confirmModal.dataset.pendingKey;
+      closeObjectModal();
+      let json = { success: false };
+      try {
+        const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, {
+          method: 'POST'
+        });
+        json = await resp.json();
+      } catch {}
+      if (json.success) {
+        await loadInventory();
+      } else {
+        alert(json.message);
+      }
+    });
+
+    btnCancel.addEventListener('click', closeObjectModal);
+
+    let state = 0;
+    nextButton.addEventListener('click', () => {
+      window.location.href = '/clubroom7';
+    });
+  </script>
+</body>
+</html>

@@ -44,7 +44,6 @@
                    placeholder="영문"
                    maxlength="20"/>
             <button id="password-submit">확인</button>
-            <button class="close-button">×</button>
           </div>
         </div>
 
@@ -261,16 +260,16 @@
       .addEventListener('click', showChoices);
     btnCancel.addEventListener('click', showChoices);
 
-    // 객체 모달 클릭 → 획득 시뮬레이트
-    objectModal.addEventListener('click', () => {
-      if (itemData['벽 2'].acquirable) {
-        confirmModal.dataset.pendingKey = '가운';
-        confirmText.innerText = '가운 아이템을 획득하시겠습니까?';
+    document.querySelector('#object-modal .dialog-box').addEventListener('click', () => {
+        if (!currentItem || !currentItem.acquirable) {
+          return closeObjectModal();
+        }
+        confirmModal.dataset.pendingKey = currentItem.dbKey;
+        confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
         confirmModal.classList.remove('hidden');
-      } else {
-        showChoices();
-      }
     });
+
+
     btnOk.addEventListener('click', async () => {
       const key = confirmModal.dataset.pendingKey;
       showChoices();
