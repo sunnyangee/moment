@@ -286,17 +286,27 @@
     }
 
     // NEXT 버튼 클릭 → 여러 innerText 순차 표시
+    // nextButton 클릭 핸들러를 아래처럼 수정하세요
     nextButton.addEventListener('click', () => {
+      // 1) 선택지 숨기기
+      choiceButtons.classList.add('hidden');
+      // (원하면 라벨, 인벤토리 버튼도 감출 수 있습니다)
+      locationLabel.classList.add('hidden');
+      inventoryBtn.classList.add('hidden');
+
+      // 2) 대사 보여주기
       if (nextIdx < nextDialogues.length) {
-        nextButton.innerText = nextDialogues[nextIdx++];
+        nextButton.textContent = nextDialogues[nextIdx++];
+        nextButton.classList.add('visible');
       }
+      // 마지막 대사 뒤에 실제 이동
       if (nextIdx === nextDialogues.length) {
-        // 마지막 메시지 뒤에 실제 이동
         setTimeout(() => {
           window.location.href = '/powersupplyroom';
         }, 800);
       }
     });
+
 
     // 인벤토리 토글 & 닫기
     inventoryBtn.addEventListener('click', toggleInventory);

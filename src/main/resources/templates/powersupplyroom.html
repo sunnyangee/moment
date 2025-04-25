@@ -202,17 +202,15 @@
 
     // 설명 모달 닫기 → 키패드 모달로 넘어가기
     objectModal.querySelector('.close-button')
-      .addEventListener('click', ()=>{
+      .addEventListener('click', () => {
         hideAllModals();
         keypadModal.classList.remove('hidden');
       });
     objectModal.querySelector('.modal-backdrop')
-      .addEventListener('click', ()=> {
+      .addEventListener('click', () => {
         hideAllModals();
         keypadModal.classList.remove('hidden');
       });
-    objectModal.querySelector('.modal-content')
-      .addEventListener('click', e=>e.stopPropagation());
 
     // 3) 키패드 제출
     keypadSubmit.addEventListener('click', async ()=>{
