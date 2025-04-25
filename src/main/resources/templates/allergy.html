@@ -191,7 +191,7 @@
     keypadSubmit.addEventListener('click', async () => {
     const answer = keypadInput.value.trim();
       try {
-        const resp = await fetch('/api/check-password/gym2f', {
+        const resp = await fetch('/api/check-password/allergy', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ answer })
