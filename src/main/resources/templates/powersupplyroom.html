@@ -195,22 +195,16 @@
           hideAllModals();
           // 잠긴 서랍
           objectDescText.innerText =
-            "작동할 수 있는 스위치가 많다. 제어 패널 아래에는 잠금 잠치가 걸린 작은 서랍이 하나 있다.";
+            "작동할 수 있는 스위치가 많다. 제어 패널 아래에는 잠금 잠치가 걸린 작은 서랍이 하나 있다.\nCODE: QSA1829";
           objectModal.classList.remove('hidden');
         },600);
       });
 
     // 설명 모달 닫기 → 키패드 모달로 넘어가기
     objectModal.querySelector('.close-button')
-      .addEventListener('click', () => {
-        hideAllModals();
-        keypadModal.classList.remove('hidden');
-      });
+      .addEventListener('click', hideAllModals);
     objectModal.querySelector('.modal-backdrop')
-      .addEventListener('click', () => {
-        hideAllModals();
-        keypadModal.classList.remove('hidden');
-      });
+      .addEventListener('click', hideAllModals);
 
     // 3) 키패드 제출
     keypadSubmit.addEventListener('click', async ()=>{
@@ -259,17 +253,23 @@
 
     // 5) 서랍 설명 클릭 → “사용” 동작
     objectModal.querySelector('.dialog-box')
-      .addEventListener('click', ()=>{
-        if (!hasKey) return showChoices();
-        objectModal.classList.add('hidden');
-        // 사용 후 설명
-        objectDescText.innerText =
-          "키를 꽂자 제어 패널에 초록 불빛이 켜진다.\n"
-          + "삐- 하는 소리와 함께 전산실 방향의 문이 열렸다.";
-        objectModal.classList.remove('hidden');
-        clickedPanel = true;
-        checkNext();
-      });
+      .addEventListener('click', () => {
+        const text = objectDescText.innerText;
+        if (text.includes('제어 패널 아래에는 잠금 잠치가 걸린 작은 서랍이')) {
+          objectModal.classList.add('hidden');
+          keypadModal.classList.remove('hidden');
+        } else if (!hasKey) {
+          showChoices();
+        } else {
+          objectModal.classList.add('hidden');
+          objectDescText.innerText = "키를 꽂자 제어 패널에 초록 불빛이 켜진다.\n"
+                                    + "삐- 하는 소리와 함께 전산실 방향의 문이 열렸다.";
+          objectModal.classList.remove('hidden');
+          clickedPanel = true;
+          checkNext();
+        }
+    });
+
 
     // 6) NEXT 버튼 클릭 → 이동
     nextButton.addEventListener('click', ()=>{

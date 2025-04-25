@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>약국</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/clubroom2.jpg" alt="방 이미지" class="room-image"/>
+
+      <div id="location-label" class="location-label hidden">B1 약국</div>
+
+      <div class="ui-overlay">
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="카운터">카운터</button>
+          <button data-item="일반 진열대">일반 진열대</button>
+          <button data-item="약품 보관 캐비닛">약품 보관 캐비닛</button>
+        </div>
+
+        <div id="paper-choice-buttons" class="choice-buttons hidden">
+          <button data-action="examine">자세히 본다</button>
+        </div>
+
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">가장 가까운 간판으로 향한다. 조용한 내부에는 알약이 흩어진 채 굴러다니고 있다. 선반은 대부분 비어 있다.
+          </p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <div id="object-modal" class="object-modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <div class="dialog-box">
+              <p id="object-description-text"></p>
+              <div class="dialog-indicator">▼</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="confirm-acquire-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
+            <button id="btn-acquire-ok">확인</button>
+            <button id="btn-acquire-cancel">취소</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="inventory-button" onclick="toggleInventory()">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <div class="modal-backdrop" onclick="toggleInventory()"></div>
+        <div class="modal-content">
+          <button class="close-button" onclick="toggleInventory()">&times;</button>
+          <h3>인벤토리</h3>
+          <ul id="inventory-list"></ul>
+        </div>
+      </div>
+
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      async function loadInventory() {
+        try {
+          const resp = await fetch('/api/items');
+          if (!resp.ok) throw new Error(resp.status);
+          const items = await resp.json();
+          const ul = document.getElementById('inventory-list');
+          ul.innerHTML = '';
+          items.forEach(item => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+            ul.appendChild(li);
+          });
+        } catch (e) {
+          console.error('인벤토리 로드 실패', e);
+        }
+      }
+
+      loadInventory();
+
+      function toggleInventory() {
+        document.getElementById('inventory-modal').classList.toggle('hidden');
+      }
+      window.toggleInventory = toggleInventory;
+
+      const choiceButtons = document.getElementById('choice-buttons');
+      const paperChoiceButtons = document.getElementById('paper-choice-buttons');
+      const dialogBox = document.getElementById('dialog-box');
+      const locationLabel = document.getElementById('location-label');
+      const roomImage = document.getElementById('room-image');
+      const objectModal = document.getElementById('object-modal');
+      const objectDescText = document.getElementById('object-description-text');
+      const confirmModal = document.getElementById('confirm-acquire-modal');
+      const confirmText = document.getElementById('confirm-acquire-text');
+      const btnOk = document.getElementById('btn-acquire-ok');
+      const btnCancel = document.getElementById('btn-acquire-cancel');
+      const inventoryList = document.getElementById('inventory-list');
+      const nextButton = document.getElementById('next-button');
+
+      const clickedItems = new Set();
+      let currentItem = null;
+      let state = 0;
+
+      const wrapper = document.querySelector('.viewport-wrapper');
+      const ua = navigator.userAgent.toLowerCase();
+      wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
+
+      const itemData = {
+        "카운터": {
+          description: "낡은 컴퓨터와 서류철이 널브러져 있다. 주변엔 의약 봉투와 복용 안내서 따위가 흩어져 있다.",
+          acquirable: false
+        },
+        "일반 진열대": {
+          dbKey: "진통제 3",
+          description: "진열장의 대부분이 비어있으나, 진통제 몇 갑 정도는 멀쩡하게 남아 있다.",
+          acquirable: true
+        },
+        "약품 보관 캐비닛": {
+          dbKey: "수액",
+          description: "살짝 열린 문틈으로 어질러진 내부가 보인다. 널부러진 것들을 살피자 비교적 멀쩡해 사용할 수 있을 듯한 수액이 있다.",
+          acquirable: true
+        }
+      };
+
+      function showObjectModal(text) {
+        choiceButtons.classList.add('fade-out');
+        setTimeout(() => {
+          choiceButtons.classList.add('hidden');
+          objectDescText.innerText = text;
+          objectModal.classList.remove('hidden');
+        }, 600);
+      }
+
+      function closeObjectModal() {
+        objectModal.classList.add('hidden');
+        confirmModal.classList.add('hidden');
+        paperChoiceButtons.classList.add('hidden');
+        choiceButtons.classList.remove('fade-out', 'hidden');
+        choiceButtons.classList.add('fade-in');
+        setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+        if (clickedItems.size === Object.keys(itemData).length) {
+          nextButton.classList.remove('hidden');
+        }
+      }
+
+      function closeConfirmModal() {
+        confirmModal.classList.add('hidden');
+        closeObjectModal();
+      }
+
+      dialogBox.addEventListener('click', () => {
+        if (state === 0) {
+          roomImage.classList.add('fade-out');
+          setTimeout(() => {
+            roomImage.src = '/images/clubroom2.jpg';
+            roomImage.classList.remove('fade-out');
+            dialogBox.classList.add('hidden');
+            choiceButtons.classList.remove('hidden');
+            locationLabel.classList.remove('hidden');
+          }, 600);
+          state++;
+        }
+      });
+
+
+      document.querySelectorAll('#choice-buttons button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const key = btn.dataset.item;
+            const info = itemData[key];
+            if (!info) return;
+            clickedItems.add(key);
+            currentItem = info;
+
+            if (key === "침낭") {
+            choiceButtons.classList.add('fade-out');
+            setTimeout(() => {
+                choiceButtons.classList.add('hidden');
+                paperChoiceButtons.classList.remove('hidden');
+            }, 600);
+            return;
+            }
+
+            choiceButtons.classList.add('fade-out');
+            setTimeout(() => {
+            choiceButtons.classList.add('hidden');
+            objectDescText.innerText = info.description;
+            objectModal.classList.remove('hidden');
+            }, 600);
+        });
+        });
+
+      objectModal.querySelectorAll('.modal-backdrop, .close-button').forEach(el => el.addEventListener('click', closeObjectModal));
+      objectModal.querySelector('.modal-content').addEventListener('click', e => e.stopPropagation());
+      confirmModal.querySelectorAll('.modal-backdrop, .close-button').forEach(el => el.addEventListener('click', closeConfirmModal));
+      confirmModal.querySelector('.modal-content').addEventListener('click', e => e.stopPropagation());
+      btnCancel.addEventListener('click', closeObjectModal);
+
+      document.querySelector('#object-modal .dialog-box').addEventListener('click', () => {
+        if (!currentItem || !currentItem.acquirable) {
+          return closeObjectModal();
+        }
+        confirmModal.dataset.pendingKey = currentItem.dbKey;
+        confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+        confirmModal.classList.remove('hidden');
+      });
+
+      btnOk.addEventListener('click', async () => {
+        const key = confirmModal.dataset.pendingKey;
+        closeConfirmModal();
+        let json = { success: false, message: "획득에 실패했습니다." };
+        try {
+          const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, { method: 'POST' });
+          json = await resp.json();
+        } catch {}
+
+        if (json.success) {
+          await loadInventory();
+        } else {
+          alert(json.message);
+        }
+
+        closeObjectModal();
+      });
+
+      nextButton.addEventListener('click', () => {
+        window.location.href = '/convenience';
+      });
+    });
+  </script>
+</body>
+</html>
