@@ -206,28 +206,23 @@
     objectModal.querySelector('.modal-backdrop')
       .addEventListener('click', hideAllModals);
 
-    // 3) 키패드 제출
-    keypadSubmit.addEventListener('click', async ()=>{
-      const answer = keypadInput.value.trim();
+    keypadSubmit.addEventListener('click', async () => {
+    const answer = keypadInput.value.trim();
       try {
         const resp = await fetch('/api/check-password/powersupplyroom', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({answer})
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer })
         });
-        if(!resp.ok) throw new Error();
-        keypadInput.value='';
-        hideAll();
-        // 서랍 열림
-        objectDescText.innerText =
-          "경쾌한 소리를 내며 잠금 장치가 열린다.\n"
-          +"작은 서랍 안에 전력 공급 키가 놓여 있다.";
-        objectModal.classList.remove('hidden');
-        // 획득 확인
-        confirmText.innerText = "전력 공급 키를 획득하시겠습니까?";
-        confirmModal.classList.remove('hidden');
+        if (!resp.ok) throw new Error();
+
+        keypadModal.classList.add('hidden');
+        dialogBox.querySelector('#dialog-text').textContent =
+          "경쾌한 소리를 내며 잠금 장치가 열린다.\n작은 서랍 안에 전력 공급 키가 놓여 있다.";
+        dialogBox.classList.remove('hidden');
       } catch {
-        alert('키패드 입력이 틀렸습니다.');
+        alert("키패드 입력이 틀렸습니다.");
+        keypadInput.value = "";
       }
     });
     // 키패드 닫기
