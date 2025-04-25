@@ -174,16 +174,23 @@
       .addEventListener('click', toggleInventory);
     loadInventory();
 
-    // 1) 첫 대화 클릭 → 선택지 등장
+
     dialogBox.addEventListener('click', () => {
-      if (state===0) {
+    if (state === 0) {
+        // 첫 입장: 대사 끝나고 선택지 보여줌
         roomImage.classList.add('fade-out');
-        setTimeout(()=>{
-          roomImage.classList.remove('fade-out');
-          showChoices();
+        setTimeout(() => {
+        roomImage.classList.remove('fade-out');
+        showChoices();
         }, 600);
         state++;
-      }
+    } else if (state === 1) {
+        // 키패드 성공 후: 서랍 설명 → 전력 공급 키 획득 모달 띄우기
+        dialogBox.classList.add('hidden');
+        confirmText.innerText = "전력 공급 키를 획득하시겠습니까?";
+        confirmModal.classList.remove('hidden');
+        state++;
+    }
     });
 
     // 2) “메인 제어 패널 구역” 클릭 → 서랍 잠금 설명
@@ -220,6 +227,7 @@
         dialogBox.querySelector('#dialog-text').textContent =
           "경쾌한 소리를 내며 잠금 장치가 열린다.\n작은 서랍 안에 전력 공급 키가 놓여 있다.";
         dialogBox.classList.remove('hidden');
+        state = 1;
 
         confirmText.innerText = "전력 공급 키를 획득하시겠습니까?";
         confirmModal.classList.remove('hidden');
