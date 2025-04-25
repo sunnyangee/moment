@@ -227,30 +227,6 @@ html, body {
 
 /* 기존 #next-button 아래에 추가 */
 
-#next-button {
-  /* dialog-box와 동일한 위치/스타일 */
-  position: absolute;
-  bottom: calc(19% + env(safe-area-inset-bottom, 10px) + 40px + 5px);
-  left: 5px;
-  right: 5px;
-  background-color: rgba(0, 0, 0, 0.65);
-  color: white;
-  padding: 15px;
-  border-radius: 10px;
-  font-size: 14px;
-  pointer-events: auto;
-  opacity: 0;
-  animation: fade-in 0.6s ease forwards;
-  z-index: 7;
-  white-space: pre-wrap; /* 줄바꿈 허용 */
-}
-
-/* 텍스트가 들어왔을 때 보이도록 */
-#next-button.visible {
-  opacity: 1;
-}
-
-
 #confirm-acquire-modal {
   position: fixed;
   top: 0; left: 0;
