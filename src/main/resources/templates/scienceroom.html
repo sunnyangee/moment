@@ -111,6 +111,8 @@
       choiceButtons.classList.remove('fade-out');
       choiceButtons.classList.add('fade-in');
       setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+
+      checkNext();
     }
     function toggleInventory() {
       inventoryModal.classList.toggle('hidden');
