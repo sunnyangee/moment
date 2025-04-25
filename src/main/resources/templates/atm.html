@@ -97,8 +97,10 @@
 
     const clickedItems = new Set();
     const itemData = {
-      "책꽂이":      { description: "각종 보드게임 백여 점 정도가 정리되어 있다. 하나 가져가도 모를 듯하다.",                acquirable: false },
-      "작은 탁구대":        { description: "장난감 탁구대가 접혀 있다. ", acquirable: false }
+      "1 번 ATM 기계 본체":      { description: "왼쪽 기계는 화면이 깨졌고, 투입구도 휘어져 있다. ",                acquirable: false },
+      "2 번 ATM 기계 본체":        { description: "화면에 [잔고 부족] 이 뜬 채로 멈춰 있으며, 투입구에 카드 하나가 꽉 끼어 있다.", acquirable: false },
+      "3 번 ATM 기계 본체":        { description: "전원이 완전히 나가 있다. 크게 부서진 곳도 없어 원인을 찾기 어렵다.", acquirable: false },
+      "2 번 ATM 기계 본체":        { description: "구석에 낡은 cctv 카메라 하나가 달려 있다. 겉보기엔 전원이 꺼져 있는 듯하지만, 가까이 다가가면 렌즈가 아주 느리게 움직인다. 기분 탓인가?", acquirable: false }
     };
     const totalItems = Object.keys(itemData).length;
 
@@ -157,7 +159,7 @@
     objectModal.querySelector('#object-description').addEventListener('click', closeObjectModal);
 
     nextButton.addEventListener('click', () => {
-      window.location.href = '/clubroom8';
+      window.location.href = '/foodcourt';
     });
   </script>
 </body>
