@@ -97,24 +97,25 @@
   </div>
 
   <script>
-    // 유틸: 모든 모달 닫기
+    // ---------- 유틸 함수 ----------
     function hideAllModals() {
       passwordModal.classList.add('hidden');
       objectModal.classList.add('hidden');
       confirmModal.classList.add('hidden');
     }
-    // 유틸: 선택지 화면 보여주기
     function showChoices() {
       hideAllModals();
       dialogBox.classList.add('hidden');
       choiceButtons.classList.remove('hidden');
       locationLabel.classList.remove('hidden');
+      choiceButtons.classList.remove('fade-out');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
     }
-
-    // 인벤토리 토글
     function toggleInventory() {
       inventoryModal.classList.toggle('hidden');
     }
+    // -------------------------------
 
     // DOM 참조
     const choiceButtons    = document.getElementById('choice-buttons');
@@ -122,6 +123,9 @@
     const dialogText       = document.getElementById('dialog-text');
     const locationLabel    = document.getElementById('location-label');
     const roomImage        = document.getElementById('room-image');
+    const passwordModal    = document.getElementById('password-modal');
+    const passwordInput    = document.getElementById('password-input');
+    const passwordSubmit   = document.getElementById('password-submit');
     const objectModal      = document.getElementById('object-modal');
     const objectDescText   = document.getElementById('object-description-text');
     const confirmModal     = document.getElementById('confirm-acquire-modal');
@@ -129,149 +133,158 @@
     const btnOk            = document.getElementById('btn-acquire-ok');
     const btnCancel        = document.getElementById('btn-acquire-cancel');
     const nextButton       = document.getElementById('next-button');
-    const passwordModal    = document.getElementById('password-modal');
-    const passwordInput    = document.getElementById('password-input');
-    const passwordSubmit   = document.getElementById('password-submit');
-    const closePwdBtns     = passwordModal.querySelectorAll('.close-button');
     const inventoryBtn     = document.querySelector('.inventory-button');
     const inventoryModal   = document.getElementById('inventory-modal');
+    const inventoryClose   = inventoryModal.querySelector('.close-button');
+    const inventoryBackdrop= inventoryModal.querySelector('.modal-backdrop');
 
-    // 초기 세팅
+    // 모바일·데스크탑 클래스
     const wrapper = document.querySelector('.viewport-wrapper');
     wrapper.classList.add(
       /android|iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase())
         ? 'mobile-os' : 'desktop-os'
     );
 
+    // 아이템 데이터
     const itemData = {
-      '실험대':    { description: '넓은 작업대에 얼룩진 가운들이 있다.', acquirable: false },
-      '세면대':    { description: '금이 간 비커와 시원한 액체가 있다.', acquirable: false },
-      '인체 모형': { description: '내장 기관이 보이는 반신 흉상이다.', acquirable: false },
-      '벽 1':     { description: '고글이 수십 개 걸려 있다.', acquirable: false },
-      '벽 2':     { description: '여러 벌의 가운이 걸려 있다.', acquirable: false },
-      '책장':     { description: '빽빽한 과학 서적과 메모장이 보인다.', acquirable: false }
+      '실험대':    {description:'넓은 작업대에 얼룩진 가운들이 있다.', acquirable:false},
+      '세면대':    {description:'금이 간 비커와 시원한 액체가 있다.', acquirable:false},
+      '인체 모형': {description:'내장 기관이 보이는 반신 흉상이다.', acquirable:false},
+      '벽 1':     {description:'고글이 수십 개 걸려 있다.', acquirable:false},
+      '벽 2':     {dbKey:'가운',description:'여러 벌의 가운이 걸려 있다.', acquirable:true},
+      '책장':     {description:'빽빽한 과학 서적과 메모장.', acquirable:false}
     };
     const totalItems = Object.keys(itemData).length;
-    let state                = 0;
-    let bookPasswordUnlocked = false;
-    let clickedCount         = 0;
+    let state = 0,
+        bookPasswordUnlocked = false,
+        clickedCount = 0;
 
-    // 대화 박스 첫 클릭 → 선택지 보여주기
-    dialogBox.addEventListener('click', () => {
-      if (state === 0) {
+    // 인벤토리 로드
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        const list = await resp.json();
+        const ul = document.getElementById('inventory-list');
+        ul.innerHTML = '';
+        list.forEach(i=>{
+          const li=document.createElement('li');
+          li.innerHTML=`<strong>${i.name}</strong><br><small>${i.description}</small>`;
+          ul.appendChild(li);
+        });
+      } catch(e){console.error(e)}
+    }
+    loadInventory();
+
+    // 1) 첫 대화 클릭 → 선택지 전환
+    dialogBox.addEventListener('click', ()=>{
+      if(state===0){
         roomImage.classList.add('fade-out');
-        setTimeout(() => {
+        setTimeout(()=>{
           roomImage.classList.remove('fade-out');
           showChoices();
-        }, 600);
+        },600);
         state++;
       }
     });
 
-    // 선택지 클릭
-    choiceButtons.querySelectorAll('button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const key  = btn.dataset.item;
-        const info = itemData[key];
+    // 2) 선택지 클릭 처리
+    choiceButtons.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const key=btn.dataset.item;
         clickedCount++;
         choiceButtons.classList.add('fade-out');
-        setTimeout(() => {
-          // 책장일 때 → 암호 모달
-          if (key === '책장') {
-            hideAllModals();
+        setTimeout(()=>{
+          hideAllModals();
+          if(key==='책장'){
             passwordModal.classList.remove('hidden');
           } else {
-            hideAllModals();
-            objectDescText.innerText = info.description;
+            objectDescText.innerText=itemData[key].description;
             objectModal.classList.remove('hidden');
           }
-        }, 600);
+        },600);
       });
     });
 
-    // 책장 암호 제출
-    passwordSubmit.addEventListener('click', async () => {
-      const answer = passwordInput.value.trim();
-      try {
-        const resp = await fetch('/api/check-password/scienceroom', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ answer })
+    // 3) 책장 암호 모달
+    passwordSubmit.addEventListener('click', async ()=>{
+      const ans=passwordInput.value.trim();
+      try{
+        const resp=await fetch('/api/check-password/scienceroom',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({answer:ans})
         });
-        if (!resp.ok) throw new Error();
-        bookPasswordUnlocked = true;
-        passwordInput.value = '';
+        if(!resp.ok) throw 0;
+        bookPasswordUnlocked=true;
+        passwordInput.value='';
         hideAllModals();
-        objectDescText.innerText = itemData['책장'].description;
+        objectDescText.innerText=itemData['책장'].description;
         objectModal.classList.remove('hidden');
-      } catch {
+      }catch{
         alert('비밀번호가 틀렸습니다.');
-        passwordInput.value = '';
       }
     });
-
     // 암호 모달 닫기
-    closePwdBtns.forEach(btn =>
-      btn.addEventListener('click', () => showChoices())
-    );
-    // 설명 모달 닫기
+    passwordModal.querySelector('.close-button')
+      .addEventListener('click', showChoices);
+    passwordModal.querySelector('.modal-backdrop')
+      .addEventListener('click', showChoices);
+
+    // 4) 설명 모달 닫기
     objectModal.querySelector('.close-button')
-      .addEventListener('click', () => showChoices());
+      .addEventListener('click', showChoices);
     objectModal.querySelector('.modal-backdrop')
-      .addEventListener('click', () => showChoices());
+      .addEventListener('click', showChoices);
+    objectModal.querySelector('.dialog-box')
+      .addEventListener('click', showChoices);
+    objectModal.querySelector('.modal-content')
+      .addEventListener('click', e=>e.stopPropagation());
 
-    // 획득 확인 모달 닫기
+    // 5) 획득 확인 모달
     confirmModal.querySelector('.close-button')
-      .addEventListener('click', () => showChoices());
+      .addEventListener('click', showChoices);
     confirmModal.querySelector('.modal-backdrop')
-      .addEventListener('click', () => showChoices());
-    btnCancel.addEventListener('click', () => showChoices());
+      .addEventListener('click', showChoices);
+    btnCancel.addEventListener('click', showChoices);
 
-    // 아이템 획득 확인
-    objectModal.addEventListener('click', () => {
-      if (!itemData['벽 2'].acquirable) {
-        showChoices();
-      } else {
-        confirmModal.dataset.pendingKey = '가운';
-        confirmText.innerText = '가운 아이템을 획득하시겠습니까?';
-        confirmModal.classList.remove('hidden');
-      }
+    // 상세 모달 클릭 시 획득 로직
+    objectModal.addEventListener('click', ()=>{
+      // 예시: '벽 2'만 획득 가능
+      confirmModal.dataset.pendingKey='가운';
+      confirmText.innerText='가운 아이템을 획득하시겠습니까?';
+      confirmModal.classList.remove('hidden');
     });
-
-    btnOk.addEventListener('click', async () => {
-      const key = confirmModal.dataset.pendingKey;
+    btnOk.addEventListener('click', async ()=>{
+      const key=confirmModal.dataset.pendingKey;
       showChoices();
-      await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, {
-        method: 'POST'
-      });
+      await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`,{method:'POST'});
       loadInventory();
     });
 
-    // NEXT 버튼 로직
-    nextButton.addEventListener('click', () => {
-      hideAllModals();
-      dialogText.innerText = '이곳에서 나가려면 이 물건을 써야 한다는 생각이 선명해진다.';
-      dialogBox.classList.remove('hidden');
-      nextButton.classList.add('hidden');
-      // 다음 클릭에 페이지 이동
-      dialogBox.addEventListener('click', () => {
-        window.location.href = '/다음페이지';
-      }, { once: true });
-    });
-
-    // 인벤토리 토글
-    inventoryBtn.addEventListener('click', toggleInventory);
-
-    // 클릭 수 + 암호 성공 조건 만족 시 NEXT 노출
-    function checkNext() {
-      if (clickedCount >= totalItems && bookPasswordUnlocked) {
+    // 6) NEXT 버튼 표시 조건
+    function checkNext(){
+      if(bookPasswordUnlocked && clickedCount>=totalItems){
         nextButton.classList.remove('hidden');
       }
     }
-    // 각 모달 닫힐 때마다 NEXT 체크
-    [passwordModal, objectModal, confirmModal].forEach(modal => {
-      modal.addEventListener('transitionend', checkNext);
+    [passwordModal, objectModal, confirmModal].forEach(mod=>{
+      mod.addEventListener('transitionend', checkNext);
     });
+
+    // NEXT 클릭
+    nextButton.addEventListener('click', ()=>{
+      hideAllModals();
+      dialogText.innerText='다음 장소로 이동합니다...';
+      dialogBox.classList.remove('hidden');
+      dialogBox.addEventListener('click', ()=>{
+        window.location.href='/다음페이지';
+      },{once:true});
+    });
+
+    // 7) 인벤토리 토글 및 닫기
+    inventoryBtn.addEventListener('click',toggleInventory);
+    inventoryClose.addEventListener('click',toggleInventory);
+    inventoryBackdrop.addEventListener('click',toggleInventory);
   </script>
 </body>
 </html>

@@ -56,7 +56,7 @@ public class ItemServiceImpl implements ItemService {
                 .map(Optional::get)
                 .filter(i -> "기억".equals(i.getCategory()))
                 .count();
-            if (already >= 2) {
+            if (already >= 1) {
                 throw new IllegalStateException(
                     String.format("‘기억’ 카테고리 아이템은 사용자당 최대 %d개까지 획득 가능합니다.", 2)
                 );
