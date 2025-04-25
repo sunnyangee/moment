@@ -235,8 +235,16 @@
           passwordModal.classList.add('hidden');
           choiceButtons.classList.add('hidden');
           paperChoiceButtons.classList.add('hidden');
-          dialogText.innerText = "…";
+          dialogText.innerText = "미처 끄지 않은 메모장을 확인할 수 있다.\n\nCODE: QHL7492";
           dialogBox.classList.remove('hidden');
+
+          const returnHandler = () => {
+            dialogBox.classList.add('hidden');
+            choiceButtons.classList.remove('hidden');
+            paperChoiceButtons.classList.remove('hidden');
+            dialogBox.removeEventListener('click', returnHandler);
+          };
+          dialogBox.addEventListener('click', returnHandler);
         } else {
           // 실패 시
           alert('비밀번호가 틀렸습니다.');
