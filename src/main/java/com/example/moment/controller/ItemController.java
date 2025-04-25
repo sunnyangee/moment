@@ -135,9 +135,12 @@ public class ItemController {
                 .filter(i -> "기억".equals(i.getCategory()))
                 .count();
             if (already >= 2) {
+                res.put("success", false);
                 res.put("message", "기억 아이템 한도에 도달했습니다.");
+                return ResponseEntity.ok(res);    // ←여기서 리턴해 주어야 추가 저장을 막습니다.
             }
         }
+        
 
         
 
