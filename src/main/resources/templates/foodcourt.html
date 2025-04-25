@@ -24,7 +24,7 @@
 
         <!-- 대화 박스 -->
         <div id="dialog-box" class="dialog-box">
-          <p id="dialog-text">제법 넓은 장내에 청결히 관리된 내부다. 어쩌면, 황량해 보일지도 모르겠다.</p>
+          <p id="dialog-text">의자와 테이블은 전부 어지럽게 흩어져 있다. 음식물은 없지만 냄새만은 그대로 남아 있는 듯, 공기 속 묘한 비릿함이 맴돈다.</p>
           <div class="dialog-indicator">▼</div>
         </div>
 
@@ -121,23 +121,18 @@
     wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
 
     const itemData = {
-      "칼 거치대": {
-        description: "벽 한쪽을 채운 거치대에 검도용 검이 일렬로 세워져 있다. 나무의 코팅이 조금씩 벗겨진 걸로 보아 몇 년은 사용한 것 같다.",
+      "고객 좌석 구역": {
+        description: "테이블마다 의자가 제멋대로 넘어가 있다. 그 중 유독 깔끔하게 정리된 한자리가 눈에 띄며, 놓인 트레이 아래에 찢긴 종이가 이질적으로 흐트러져 있다.",
         acquirable: false
       },
-      "행거": {
-        dbKey: "헬멧",
-        description: "검도 유니폼과 헬멧이 차곡히 놓여 있다.",
+      "정수기": {
+        dbKey: "녹슨 열쇠",
+        description: "벽 구석에 붙어 있는 정수기는 이미 물이 끊긴 지 오래다. 버튼을 눌러도 아무런 반응이 없고, 배출구 안엔 녹슨 열쇠 하나가 끼워져 있다.",
         acquirable: true
       },
-      "연습용 더미": {
-        description: "협소한 자리 덕인지 동아리 인원수에 비해 턱없이 모자란, 고작 네 개만이 자리해 있다. 그마저도 보수해 사용한 걸로 보아하니 검도부는 학교의 애정을 받지 못한 듯하다…….",
+      "조리실 입구": {
+        description: "무거운 철문이다. 녹슨 자물쇠가 걸려 있다.",
         acquirable: false
-      },
-      "메달": {
-        dbKey: "검도부 메달",
-        description: "황동색 메달이 툭 튀어나온 못에 대충 걸려 있다. 이만해도 훌륭한 성과지만…… 학교에서는 만족하지 못했나 보다. 이쯤이면 수수한 검도부실이 황량해 보이기도 한다.",
-        acquirable: true
       }
     };
 
@@ -203,7 +198,7 @@
 
     let state = 0;
     nextButton.addEventListener('click', () => {
-      window.location.href = '/clubroom6';
+      window.location.href = '/cookingroom';
     });
   </script>
 </body>

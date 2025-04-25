@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>조리실</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+
+  <!-- 아이템 사용 모달 -->
+  <div id="use-item-modal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <p>“녹슨 열쇠”를 사용하시겠습니까?</p>
+      <button id="btn-use-item-ok">사용</button>
+      <button id="btn-use-item-cancel">취소</button>
+    </div>
+  </div>
+
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/homeroom.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">1F 가정실</div>
+
+      <div class="ui-overlay">
+        <!-- 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="조리대">조리대</button>
+          <button data-item="가스레인지">가스레인지</button>
+          <button data-item="냉동 창고">냉동 창고</button>
+        </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">조리실로 이동하기 위해서는 아이템이 필요하다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <!-- 설명 모달 -->
+        <div id="object-modal" class="object-modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">×</button>
+            <div class="dialog-box">
+              <p id="object-description-text"></p>
+              <div class="dialog-indicator">▼</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <button class="close-button">×</button>
+          <h3>인벤토리</h3>
+          <ul id="inventory-list"></ul>
+        </div>
+      </div>
+
+      <!-- NEXT 버튼 -->
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    function setViewportSize() {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    }
+    window.addEventListener('resize', setViewportSize);
+    window.addEventListener('load', setViewportSize);
+
+    const wrapper = document.querySelector('.viewport-wrapper');
+    const ua = navigator.userAgent.toLowerCase();
+    wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
+
+    const dialogBox      = document.getElementById('dialog-box');
+    const locationLabel  = document.getElementById('location-label');
+    const choiceButtons  = document.getElementById('choice-buttons');
+    const roomImage      = document.getElementById('room-image');
+    const objectModal    = document.getElementById('object-modal');
+    const objectDescText = document.getElementById('object-description-text');
+    const nextButton     = document.getElementById('next-button');
+    const inventoryBtn   = document.querySelector('.inventory-button');
+    const inventoryModal = document.getElementById('inventory-modal');
+    const inventoryList  = document.getElementById('inventory-list');
+
+    const useItemModal = document.getElementById('use-item-modal');
+    const btnUseItemOk = document.getElementById('btn-use-item-ok');
+    const btnUseItemCancel = document.getElementById('btn-use-item-cancel');
+
+    const clickedItems = new Set();
+    const itemData = {
+      "조리대":   { dbKey: "렌치", description: "오래된 도마와 부식된 식칼, 부탄가스 등이 어지럽게 놓여 있다. 고치려 한참을 씨름한 듯 우그러진 전기 그릴의 자태는 안타까울 정도, 칠이 벗겨진 렌치가 그 옆에 자리해 있다.", acquirable: true },
+      "가스레인지": { description: "사용 흔적이 선명한 가스레인지는 스위치가 모두 꺼진 상태지만, 계기판에는 붉은색 [주의] 불빛이 희미하게 남아 있다.", acquirable: false },
+      "냉동 창고": { dbKey: "보호복",description: "식재료가 썩어 퀴퀴한 냄새가 작렬하며, 새나온 액체가 스민 자국이 바닥에 만연하다. 쓰러진 선반들 사이로 보호복 몇 벌이 널부러져 있다.", acquirable: true }
+    }
+    const totalItems = Object.keys(itemData).length;
+
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        inventoryList.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          inventoryList.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+    loadInventory();
+
+    function toggleInventory() {
+      inventoryModal.classList.toggle('hidden');
+    }
+    inventoryBtn.addEventListener('click', toggleInventory);
+    inventoryModal.querySelector('.close-button').addEventListener('click', toggleInventory);
+    inventoryModal.querySelector('.modal-backdrop').addEventListener('click', toggleInventory);
+
+    function showObjectModal(text) {
+      choiceButtons.classList.add('fade-out');
+      setTimeout(() => {
+        choiceButtons.classList.add('hidden');
+        objectDescText.innerText = text;
+        objectModal.classList.remove('hidden');
+      }, 600);
+    }
+
+    function closeObjectModal() {
+      objectModal.classList.add('hidden');
+      choiceButtons.classList.remove('hidden', 'fade-out');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size >= totalItems) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+
+    objectModal.querySelector('.modal-backdrop').addEventListener('click', closeObjectModal);
+    objectModal.querySelector('.close-button').addEventListener('click', closeObjectModal);
+    objectModal.querySelector('.modal-content').addEventListener('click', closeObjectModal);
+
+    choiceButtons.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.item;
+        const item = itemData[key];
+        if (!item) return;
+        clickedItems.add(key);
+        showObjectModal(item.description);
+      });
+    });
+
+    document.querySelector('#object-modal .dialog-box').addEventListener('click', () => {
+        if (!currentItem || !currentItem.acquirable) {
+          return closeObjectModal();
+        }
+        confirmModal.dataset.pendingKey = currentItem.dbKey;
+        confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+        confirmModal.classList.remove('hidden');
+      });
+    
+      btnOk.addEventListener('click', async () => {
+        const key = confirmModal.dataset.pendingKey;
+        closeConfirmModal();
+    
+        let json = { success: false, message: "획득에 실패했습니다." };
+        try {
+          const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, { method: 'POST' });
+          json = await resp.json();
+        } catch {}
+    
+        if (json.success) {
+          await loadInventory();
+        } else {
+          alert(json.message);
+        }
+    
+        closeObjectModal();
+      });
+
+    nextButton.addEventListener('click', () => {
+      window.location.href = '/cafeteria';
+    });
+
+    let state = 0;
+    dialogBox.addEventListener('click', () => {
+      if (state === 0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(() => {
+          roomImage.src = '/images/homeroom.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        }, 600);
+        state++;
+      }
+    });
+
+    // 아이템 사용 흐름
+    btnUseItemOk.addEventListener('click', async () => {
+      try {
+        const resp = await fetch('/api/items/use?key=녹슨 열쇠', { method: 'POST' });
+        const result = await resp.json();
+        if (!result.success) throw new Error();
+
+        useItemModal.classList.add('hidden');
+        dialogBox.querySelector('#dialog-text').innerText =
+          "녹슨 열쇠를 꽂아 돌리면, 오래된 조리실 문이 삐걱이며 열린다. ";
+        dialogBox.classList.remove('hidden');
+        loadInventory();
+      } catch {
+        alert("아이템 사용에 실패했습니다.");
+      }
+    });
+
+    btnUseItemCancel.addEventListener('click', () => {
+      useItemModal.classList.add('hidden');
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      useItemModal.classList.remove('hidden');
+      dialogBox.classList.add('hidden');
+    });
+  </script>
+</body>
+</html>
