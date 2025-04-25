@@ -58,9 +58,6 @@ public class SecurityConfig {
               "/api/debug-passwords"
             ).permitAll()
 
-            // 키패드 검증 API도 로그인 없이 허용
-            .requestMatchers("/api/check-password/**").permitAll()
-
             // 사용자 영역
             .requestMatchers("/home").hasRole("USER")
             .requestMatchers("/progress/**").hasRole("USER")
