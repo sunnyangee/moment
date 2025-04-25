@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>영안실</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/classroom2.jpg" alt="방 이미지" class="room-image"/>
+
+      <div id="location-label" class="location-label hidden">B1 영안실</div>
+
+      <div class="ui-overlay">
+        <!-- 1) 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="염습실">염습실</button>
+          <button data-item="수납 공간">수납 공간</button>
+          <button data-item="냉동고">냉동고</button>
+        </div>
+
+        <!-- 2) 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">무거운 철문을 열자 싸늘한 공기가 피부에 닿는다. 불이 꺼진 채 오래 방치된 듯한 공간, 조용하고 정적이지만 어딘가 서늘하다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <!-- 3) 설명 모달 (이미지 제거 버전) -->
+        <div id="object-modal" class="object-modal hidden">
+          <!-- 닫기 버튼 -->
+          <button class="close-button" onclick="closeObjectModal()">X</button>
+          <!-- 설명 박스 전체 클릭 시에도 닫힘 -->
+          <div id="object-description" class="dialog-box">
+            <p id="object-description-text"></p>
+            <div class="dialog-indicator">▼</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button" onclick="toggleInventory()">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <button class="close-button" onclick="toggleInventory()">X</button>
+        <h3>인벤토리</h3>
+        <ul id="inventory-list"></ul>
+      </div>
+
+      <!-- NEXT 버튼 -->
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        const ul = document.getElementById('inventory-list');
+        ul.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          ul.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+
+    function setViewportSize() {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    }
+    window.addEventListener('resize', setViewportSize);
+    window.addEventListener('load', () => {
+      setViewportSize();
+      loadInventory();
+    });
+
+    const wrapper         = document.querySelector('.viewport-wrapper');
+    const ua              = navigator.userAgent.toLowerCase();
+    const dialogBox       = document.getElementById('dialog-box');
+    const locationLabel   = document.getElementById('location-label');
+    const choiceButtons   = document.getElementById('choice-buttons');
+    const roomImage       = document.getElementById('room-image');
+    const objectModal     = document.getElementById('object-modal');
+    const objectDescText  = document.getElementById('object-description-text');
+    const nextButton      = document.getElementById('next-button');
+    const inventoryModal  = document.getElementById('inventory-modal');
+
+    wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
+
+    const clickedItems = new Set();
+    const itemData = {
+      "염습실":      { description: "작은 세면대와 수술용 조명이 설치되어 있다. 벽에는 장갑, 면포, 의료 도구들이 가지런히 놓여 있고 일부는 녹슬어 있다. ",                acquirable: false },
+      "수납 공간":        { description: "낮은 선반과 캐비닛들이 늘어서 있으며, 이름이 지워진 카드들이 흩어져 있다.  개중 한 서랍 안에는 사진이 도려내진 직원용 카드키가 들어 있다.", acquirable: false },
+      "냉동고":        { description: "8구 정도의 안치능력을 갖추고 있다. 4개의 칸은 자물쇠가 걸린 채로 닫혀 있다.", acquirable: false }
+    };
+    const totalItems = Object.keys(itemData).length;
+
+    function toggleInventory() {
+      inventoryModal.classList.toggle('hidden');
+    }
+    window.toggleInventory = toggleInventory;
+
+    function showObjectModal(text) {
+      choiceButtons.classList.add('fade-out');
+      setTimeout(() => {
+        choiceButtons.classList.add('hidden');
+        objectDescText.innerText = text;
+        objectModal.classList.remove('hidden');
+      }, 600);
+    }
+
+    function closeObjectModal() {
+      objectModal.classList.add('hidden');
+      choiceButtons.classList.remove('hidden','fade-out');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size === totalItems) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+
+    let state = 0;
+    dialogBox.addEventListener('click', () => {
+      if (state === 0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(() => {
+          roomImage.src = '/images/classroom2.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        }, 600);
+        state++;
+      }
+    });
+
+    document.querySelectorAll('#choice-buttons button').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const key = btn.dataset.item;
+        const item = itemData[key];
+        if (!item) return;
+        clickedItems.add(key);
+        showObjectModal(item.description);
+      });
+    });
+
+    objectModal.addEventListener('click', closeObjectModal);
+    objectModal.querySelector('.close-button').addEventListener('click', closeObjectModal);
+    objectModal.querySelector('#object-description').addEventListener('click', closeObjectModal);
+
+    nextButton.addEventListener('click', () => {
+      window.location.href = '/administation';
+    });
+  </script>
+</body>
+</html>
