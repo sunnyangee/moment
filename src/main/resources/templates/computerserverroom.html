@@ -23,7 +23,7 @@
 
         <!-- 대화 박스 -->
         <div id="dialog-box" class="dialog-box">
-          <p id="dialog-text">옅은 소독약 냄새가 느껴진다. 커튼이 쳐진 침대엔 꼭 누군가가 있을 것 같은 기분이 든다. </p>
+          <p id="dialog-text">키를 꽂자 제어 패널에 초록 불빛이 켜지고, 삐- 하는 소리와 함께 전산실 방향의 문이 열린다. 중앙 제어용 컴퓨터와 서랍에 수북하게 쌓인 외장하드가 보인다.</p>
           <div class="dialog-indicator">▼</div>
         </div>
 
@@ -117,14 +117,9 @@
     let currentItem = null;
 
     const itemData = {
-      "침대 1":        { dbKey: "나잘 스프레이", description: "교복 자켓이 널부러져 있다. 들어올리면…… 툭 떨어진 소형 나잘 스프레이를 발견할 수 있다.", acquirable: true },
-      "스탠드 옷걸이": { dbKey: "약 수납장 열쇠", description: "보건 선생님의 것으로 보이는 가운이 보인다. 주머니 안에서 '약 수납장' 이라 적힌 열쇠를 찾았다. ", acquirable: true },
-      "약 수납장":     { description: "각종 약품들이 진열된 약 수납장이다. 철컥 소리와 함께 유리장의 문이 열린다. 진통제 한 통 정도는 챙길 수 있을 것 같다.", acquirable: false },
-      "진통제":        { dbKey: "진통제", description: "진통제가 들어 있다.", acquirable: true },
-      "침대 2":        { description: "베개 아래쪽에 핏자국이 남아 있다. 생긴 지 아주 오래된 듯이 갈색으로 변해 있고, 냄새도 나지 않는다.", acquirable: false },
-      "책상":          { description: "건강기록부가 놓여 있다. 상단부터 차례대로 선천적 질환을 가진 이들과, 재학 중 증세를 호소한 이들이 적혀 있다. ", acquirable: false },
-      "서랍장":        { description: "각종 서류들과 안전수칙에 관한 서적이 몇 권 놓여 있다. 교내 안전 교육, 심폐소생술, 하임리히법 등…… 크게 특별한 건 없어 보인다.", acquirable: false },
-      "냉장고":        { description: "냉동칸에는 다량의 아이스팩이, 냉장칸에는 이온 음료와 영양제 등이 놓여 있다.", acquirable: false }
+      "중앙 제어용 컴퓨터":        {description: "어둡던 모니터를 깨우자 오래된 병원 로고가 로딩된다. 아주 느리게 반응하지만, 마우스를 화면 가장자리로 옮기자 숨어 있던 창이 튀어나온다.\n\n '병원 내부 일정표' 마지막 등록된 일정은 [연구 일지 폐기ㅡ파쇄기 처분 동시 진행]", acquirable: false },
+      "파쇄기": { dbKey: "출입 카드", description: "벽에 붙은 파쇄기는 전원이 꺼진 채, 입구엔 반쯤 삼켜진 서류 조각이 걸려 있다. 서류는 모두 찢겼지만 그 일부는 잔해처럼 빠지지 않는다. 내부에 출입 카드가 끼어 있다.\n\n사진이 붙어 있을 자리에 메모지가 붙어 있다. [제발 나갈 때 카드 찍고 나가라! 경보 울리는 거 귀 아프다!]", acquirable: true },
+      "출입 관리 패널":     { description: "출입 카드를 찍는다. 달칵, 문이 열리는 소리가 난다.", acquirable: false }
     };
 
     window.toggleInventory = () => inventoryModal.classList.toggle('hidden');
@@ -172,24 +167,10 @@
         const cleanedLabel = label.replaceAll('\u00A0', ' ').trim();
         clickedItems.add(cleanedLabel);
 
-        if (cleanedLabel === "약 수납장"
-          && ![...inventoryList.children].some(li => li.querySelector('strong')?.textContent === "약 수납장 열쇠")) {
-          return alert("약 수납장 열쇠가 없습니다!");
+        if (cleanedLabel === "출입 관리 패널"
+          && ![...inventoryList.children].some(li => li.querySelector('strong')?.textContent === "출입 카드")) {
+          return alert("출입 카드가 없습니다!");
         }
-
-        currentItem = itemData[cleanedLabel] || null;
-        if (cleanedLabel === "약 수납장") {
-          currentItem = itemData["진통제"];
-          try {
-            await fetch(`/api/items/consume?key=${encodeURIComponent("약 수납장 열쇠")}`, {
-              method: 'DELETE'
-            });
-            await loadInventory();
-          } catch (e) {
-            console.error("열쇠 삭제 실패", e);
-          }
-        }
-
         showObjectModal(currentItem.description);
       });
     });
@@ -237,7 +218,7 @@
       }
     });
 
-    nextButton.addEventListener('click', () => window.location.href = '/principalsoffice');
+    nextButton.addEventListener('click', () => window.location.href = '/pharmacy');
   });
   </script>
 </body>

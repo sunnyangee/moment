@@ -164,6 +164,10 @@
           locationLabel.classList.remove('hidden');
         }, 600);
         state++;
+      } else if (state === 1) {
+        // 암호 입력 이후 설명 다이얼로그 닫고 선택지 복귀
+        dialogBox.classList.add('hidden');
+        choiceButtons.classList.remove('hidden');
       }
     });
 
