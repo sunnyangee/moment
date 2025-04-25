@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>중앙 전력 공급실</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image"
+           src="/images/powersupplyroom.jpg"
+           alt="중앙전력공급실"
+           class="room-image"/>
+      <div id="location-label"
+           class="location-label hidden">B1 중앙 전력 공급실</div>
+
+      <div class="ui-overlay">
+        <!-- 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="메인 제어 패널 구역">메인 제어 패널 구역</button>
+        </div>
+
+        <!-- 키패드 입력 모달 -->
+        <div id="keypad-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <h3>서랍을 열기 위해서는 영문 키패드를 입력해야 한다. <br>CODE: QSA1829</h3>
+            <input type="text"
+                   id="keypad-input"
+                   placeholder="insert here"
+                   maxlength="20"/>
+            <button id="keypad-submit">확인</button>
+            <button class="close-button">×</button>
+          </div>
+        </div>
+
+        <!-- 설명 모달 -->
+        <div id="object-modal" class="object-modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">×</button>
+            <div class="dialog-box">
+              <p id="object-description-text"></p>
+              <div class="dialog-indicator">▼</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 획득 확인 모달 -->
+        <div id="confirm-acquire-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">×</button>
+            <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
+            <button id="btn-acquire-ok">확인</button>
+            <button id="btn-acquire-cancel">취소</button>
+          </div>
+        </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">
+            주위를 둘러보면, 여전히 단정한 실내다. 한 가지 달라진 점이 있다면...... 은은하게 코 끝을 스치는 소독약 냄새인 것 같다. 
+          </p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button">
+        <img src="/images/inventory.png"
+             alt="인벤토리 아이콘"
+             class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <button class="close-button">×</button>
+          <h3>인벤토리</h3>
+          <ul id="inventory-list"></ul>
+        </div>
+      </div>
+
+      <!-- NEXT 버튼 -->
+      <button id="next-button"
+              class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // --- DOM 참조 ---
+    const choiceButtons   = document.getElementById('choice-buttons');
+    const dialogBox       = document.getElementById('dialog-box');
+    const dialogText      = document.getElementById('dialog-text');
+    const locationLabel   = document.getElementById('location-label');
+    const roomImage       = document.getElementById('room-image');
+    const keypadModal     = document.getElementById('keypad-modal');
+    const keypadInput     = document.getElementById('keypad-input');
+    const keypadSubmit    = document.getElementById('keypad-submit');
+    const objectModal     = document.getElementById('object-modal');
+    const objectDescText  = document.getElementById('object-description-text');
+    const confirmModal    = document.getElementById('confirm-acquire-modal');
+    const confirmText     = document.getElementById('confirm-acquire-text');
+    const btnOk           = document.getElementById('btn-acquire-ok');
+    const btnCancel       = document.getElementById('btn-acquire-cancel');
+    const inventoryBtn    = document.querySelector('.inventory-button');
+    const inventoryModal  = document.getElementById('inventory-modal');
+    const inventoryClose  = inventoryModal.querySelector('.close-button');
+    const inventoryList   = document.getElementById('inventory-list');
+    const nextButton      = document.getElementById('next-button');
+
+    // 모바일/데스크탑
+    document.documentElement.style.setProperty('--vh', `${window.innerHeight*0.01}px`);
+    window.addEventListener('resize', ()=> {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight*0.01}px`);
+    });
+    const wrapper = document.querySelector('.viewport-wrapper');
+    wrapper.classList.add(
+      /android|iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase())
+        ? 'mobile-os' : 'desktop-os'
+    );
+
+    // --- 상태 변수 ---
+    let state = 0;
+    let hasKey = false;
+    let clickedPanel = false;
+
+    // --- 유틸 함수 ---
+    function hideAllModals() {
+      keypadModal.classList.add('hidden');
+      objectModal.classList.add('hidden');
+      confirmModal.classList.add('hidden');
+    }
+    function showChoices() {
+      hideAllModals();
+      dialogBox.classList.add('hidden');
+      choiceButtons.classList.remove('hidden');
+      locationLabel.classList.remove('hidden');
+      choiceButtons.classList.remove('fade-out');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(()=> choiceButtons.classList.remove('fade-in'), 600);
+      checkNext();
+    }
+    function toggleInventory() {
+      inventoryModal.classList.toggle('hidden');
+    }
+    function loadInventory() {
+      fetch('/api/items')
+        .then(r=>r.json())
+        .then(list=>{
+          inventoryList.innerHTML = '';
+          list.forEach(i=>{
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${i.name}</strong><br><small>${i.description}</small>`;
+            inventoryList.append(li);
+          });
+        }).catch(console.error);
+    }
+    function checkNext() {
+      if (hasKey && clickedPanel) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+    // ---------------------
+
+    // 인벤토리 wiring
+    inventoryBtn.addEventListener('click', toggleInventory);
+    inventoryClose.addEventListener('click', toggleInventory);
+    inventoryModal.querySelector('.modal-backdrop')
+      .addEventListener('click', toggleInventory);
+    loadInventory();
+
+    // 1) 첫 대화 클릭 → 선택지 등장
+    dialogBox.addEventListener('click', () => {
+      if (state===0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(()=>{
+          roomImage.classList.remove('fade-out');
+          showChoices();
+        }, 600);
+        state++;
+      }
+    });
+
+    // 2) “메인 제어 패널 구역” 클릭 → 서랍 잠금 설명
+    choiceButtons.querySelector('[data-item="메인 제어 패널 구역"]')
+      .addEventListener('click', ()=>{
+        clickedPanel = true;
+        choiceButtons.classList.add('fade-out');
+        setTimeout(()=>{
+          hideAllModals();
+          // 잠긴 서랍
+          objectDescText.innerText =
+            "작동할 수 있는 스위치가 많다. 제어 패널 아래에는 잠금 잠치가 걸린 작은 서랍이 하나 있다.";
+          objectModal.classList.remove('hidden');
+        },600);
+      });
+
+    // 설명 모달 닫기 → 키패드 모달로 넘어가기
+    objectModal.querySelector('.close-button')
+      .addEventListener('click', ()=>{
+        hideAllModals();
+        keypadModal.classList.remove('hidden');
+      });
+    objectModal.querySelector('.modal-backdrop')
+      .addEventListener('click', ()=> {
+        hideAllModals();
+        keypadModal.classList.remove('hidden');
+      });
+    objectModal.querySelector('.modal-content')
+      .addEventListener('click', e=>e.stopPropagation());
+
+    // 3) 키패드 제출
+    keypadSubmit.addEventListener('click', async ()=>{
+      const answer = keypadInput.value.trim();
+      try {
+        const resp = await fetch('/api/check-password/powerroom', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({answer})
+        });
+        if(!resp.ok) throw new Error();
+        keypadInput.value='';
+        hideAll();
+        // 서랍 열림
+        objectDescText.innerText =
+          "경쾌한 소리를 내며 잠금 장치가 열린다.\n"
+          +"작은 서랍 안에 전력 공급 키가 놓여 있다.";
+        objectModal.classList.remove('hidden');
+        // 획득 확인
+        confirmText.innerText = "전력 공급 키를 획득하시겠습니까?";
+        confirmModal.classList.remove('hidden');
+      } catch {
+        alert('키패드 입력이 틀렸습니다.');
+      }
+    });
+    // 키패드 닫기
+    keypadModal.querySelector('.close-button')
+      .addEventListener('click', showChoices);
+    keypadModal.querySelector('.modal-backdrop')
+      .addEventListener('click', showChoices);
+
+    // 4) 키 획득 확인
+    btnOk.addEventListener('click', async ()=>{
+      confirmModal.classList.add('hidden');
+      hideAllModals();
+      await fetch('/api/items/acquire?key=전력 공급 키',{method:'POST'});
+      loadInventory();
+      hasKey = true;
+      // 획득 직후 “전력 공급키 사용” 선택지로
+      objectDescText.innerText =
+        "[ 키 뒷면 ]: 패널 측면 포트에 꽂아야만 전력이 정상 공급됩니다.\n\n"
+        + "> 전력 공급 키를 패널 측면에 꽂는다.";
+      objectModal.classList.remove('hidden');
+    });
+    btnCancel.addEventListener('click', showChoices);
+
+    // 5) 서랍 설명 클릭 → “사용” 동작
+    objectModal.querySelector('.dialog-box')
+      .addEventListener('click', ()=>{
+        if (!hasKey) return showChoices();
+        objectModal.classList.add('hidden');
+        // 사용 후 설명
+        objectDescText.innerText =
+          "키를 꽂자 제어 패널에 초록 불빛이 켜진다.\n"
+          + "삐- 하는 소리와 함께 전산실 방향의 문이 열렸다.";
+        objectModal.classList.remove('hidden');
+        clickedPanel = true;
+        checkNext();
+      });
+
+    // 6) NEXT 버튼 클릭 → 이동
+    nextButton.addEventListener('click', ()=>{
+      window.location.href = '/computerserverroom';
+    });
+  });
+  </script>
+</body>
+</html>
