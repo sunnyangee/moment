@@ -167,13 +167,16 @@
         const cleanedLabel = label.replaceAll('\u00A0', ' ').trim();
         clickedItems.add(cleanedLabel);
 
+        currentItem = itemData[cleanedLabel];  // ✅ currentItem을 여기서 세팅해야 해!!
+
         if (cleanedLabel === "출입 관리 패널"
-          && ![...inventoryList.children].some(li => li.querySelector('strong')?.textContent === "출입 카드")) {
-          return alert("출입 카드가 없습니다!");
+        && ![...inventoryList.children].some(li => li.querySelector('strong')?.textContent === "출입 카드")) {
+        return alert("출입 카드가 없습니다!");
         }
         showObjectModal(currentItem.description);
       });
     });
+
 
     document.querySelector('#object-modal .dialog-box').addEventListener('click', () => {
       if (!currentItem || !currentItem.acquirable) {
