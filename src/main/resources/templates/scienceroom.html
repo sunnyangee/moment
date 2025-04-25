@@ -2,15 +2,20 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>과학실</title>
   <link rel="stylesheet" th:href="@{/css/home.css}" />
 </head>
 <body>
   <div class="viewport-wrapper">
     <div class="room-container">
-      <img id="room-image" src="/images/scienceroom.jpg" alt="방 이미지" class="room-image"/>
-      <div id="location-label" class="location-label hidden">3F 과학실</div>
+      <img id="room-image"
+           src="/images/scienceroom.jpg"
+           alt="방 이미지"
+           class="room-image"/>
+      <div id="location-label"
+           class="location-label hidden">3F 과학실</div>
 
       <div class="ui-overlay">
         <!-- 선택지 -->
@@ -25,26 +30,23 @@
 
         <!-- 암호 입력 모달 -->
         <div id="password-modal" class="modal hidden">
-          <div class="modal-backdrop" onclick="closePasswordModal()"></div>
-          <div class="modal-content" onclick="event.stopPropagation()">
-            <p>잠금 장치가 붙어 있는 책장입니다. 영문 키패드를 입력하세요.</p>
-            <input type="text" id="password-input" placeholder="영문" maxlength="20"/>
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <p>잠금 장치가 붙어 있는 책장입니다.<br>영문 키패드를 입력하세요.</p>
+            <input type="text"
+                   id="password-input"
+                   placeholder="영문"
+                   maxlength="20"/>
             <button id="password-submit">확인</button>
             <button class="close-button">×</button>
           </div>
         </div>
 
-        <!-- 대화 박스 -->
-        <div id="dialog-box" class="dialog-box">
-          <p id="dialog-text">과학실 내부 실험대와 세면대가 놓여 있다. 인체 모형과 벽면, 책장까지 한눈에 들어온다. 어쩐지 서늘하다.</p>
-          <div class="dialog-indicator">▼</div>
-        </div>
-
         <!-- 설명 모달 -->
         <div id="object-modal" class="object-modal hidden">
-          <button class="close-button">×</button>
           <div class="modal-backdrop"></div>
-          <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-content">
+            <button class="close-button">×</button>
             <div class="dialog-box">
               <p id="object-description-text"></p>
               <div class="dialog-indicator">▼</div>
@@ -55,23 +57,35 @@
         <!-- 획득 확인 모달 -->
         <div id="confirm-acquire-modal" class="modal hidden">
           <div class="modal-backdrop"></div>
-          <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-content">
             <button class="close-button">×</button>
             <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
             <button id="btn-acquire-ok">확인</button>
             <button id="btn-acquire-cancel">취소</button>
           </div>
         </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">
+            과학실 내부 실험대와 세면대가 놓여 있다.
+            인체 모형과 벽면, 책장까지 한눈에 들어온다.
+            어쩐지 서늘하다.
+          </p>
+          <div class="dialog-indicator">▼</div>
+        </div>
       </div>
 
       <!-- 인벤토리 -->
       <button class="inventory-button">
-        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+        <img src="/images/inventory.png"
+             alt="인벤토리 아이콘"
+             class="inventory-icon"/>
       </button>
       <div id="inventory-modal" class="inventory-modal hidden">
-        <div class="modal-backdrop" onclick="toggleInventory()"></div>
-        <div class="modal-content" onclick="event.stopPropagation()">
-          <button class="close-button" onclick="toggleInventory()">×</button>
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <button class="close-button">×</button>
           <h3>인벤토리</h3>
           <ul id="inventory-list"></ul>
         </div>
@@ -83,43 +97,24 @@
   </div>
 
   <script>
-    // --- 유틸 함수 ------------------------------------------------------------
+    // 유틸: 모든 모달 닫기
     function hideAllModals() {
       passwordModal.classList.add('hidden');
       objectModal.classList.add('hidden');
       confirmModal.classList.add('hidden');
     }
+    // 유틸: 선택지 화면 보여주기
     function showChoices() {
       hideAllModals();
       dialogBox.classList.add('hidden');
       choiceButtons.classList.remove('hidden');
-      choiceButtons.classList.remove('fade-out');
-      choiceButtons.classList.add('fade-in');
-      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      locationLabel.classList.remove('hidden');
     }
+
+    // 인벤토리 토글
     function toggleInventory() {
       inventoryModal.classList.toggle('hidden');
     }
-    // -------------------------------------------------------------------------
-
-    // 인벤토리 로드
-    async function loadInventory() {
-      try {
-        const resp = await fetch('/api/items');
-        if (!resp.ok) throw new Error(resp.status);
-        const items = await resp.json();
-        const ul = document.getElementById('inventory-list');
-        ul.innerHTML = '';
-        items.forEach(item => {
-          const li = document.createElement('li');
-          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
-          ul.appendChild(li);
-        });
-      } catch (e) {
-        console.error('인벤토리 로드 실패', e);
-      }
-    }
-    loadInventory();
 
     // DOM 참조
     const choiceButtons    = document.getElementById('choice-buttons');
@@ -138,34 +133,36 @@
     const passwordInput    = document.getElementById('password-input');
     const passwordSubmit   = document.getElementById('password-submit');
     const closePwdBtns     = passwordModal.querySelectorAll('.close-button');
-    const inventoryModal   = document.getElementById('inventory-modal');
     const inventoryBtn     = document.querySelector('.inventory-button');
+    const inventoryModal   = document.getElementById('inventory-modal');
 
-    // 기초 설정
+    // 초기 세팅
     const wrapper = document.querySelector('.viewport-wrapper');
-    wrapper.classList.add(/android|iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) ? 'mobile-os' : 'desktop-os');
+    wrapper.classList.add(
+      /android|iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase())
+        ? 'mobile-os' : 'desktop-os'
+    );
 
     const itemData = {
-      '실험대':    { description: '실험을 수행할 수 있는 넓은 작업 공간으로, 옅은 얼룩이 진 가운 두어벌이 구겨진 채 올라가 있다.', acquirable: false },
-      '세면대':    { description: '금이 간 비커가 놓여져 있다. 투명한 무언가가 안에 들어있는데, 맡아보면 코 끝이 저릿하도록 시원한 느낌이 확 풍긴다. 짐작건대, 아마 과산화수소?', acquirable: false },
-      '인체 모형': { description: '반신 크기의 인체 모형이다. 배 부분이 뚫려 내장 기관이 보이는 형태며, 인위적으로 강조한 색과 코팅이 어색한 느낌을 준다. 조금 젖어있는 것 같기도…… 하다. 가슴 부분에 마커로 낙서가 되어 있다. CODE: QYT9418', acquirable: false },
-      '벽 1':     { description: '벽걸이에 안전한 실험을 위한 고글이 걸려 있다. 넉넉하게 서른 개 즈음이 걸린 듯하다. ', acquirable: false },
-      '벽 2':     { dbKey: '가운', description: '행거에 한 반 인원수 만큼의 가운이 놓여 있다. 다만, 쓸만한 것은 네 벌 정도다.', acquirable: true },
-      '책장':     { description: '과학 서적이 빽빽하게 놓인 이단 책장이다. 책 위 메모장엔 다음과 같이 쓰여 있다. [나가기 위해서 내가 시도해 본 것]', acquirable: false }
+      '실험대':    { description: '넓은 작업대에 얼룩진 가운들이 있다.', acquirable: false },
+      '세면대':    { description: '금이 간 비커와 시원한 액체가 있다.', acquirable: false },
+      '인체 모형': { description: '내장 기관이 보이는 반신 흉상이다.', acquirable: false },
+      '벽 1':     { description: '고글이 수십 개 걸려 있다.', acquirable: false },
+      '벽 2':     { description: '여러 벌의 가운이 걸려 있다.', acquirable: false },
+      '책장':     { description: '빽빽한 과학 서적과 메모장이 보인다.', acquirable: false }
     };
     const totalItems = Object.keys(itemData).length;
-    let state = 0;
+    let state                = 0;
     let bookPasswordUnlocked = false;
+    let clickedCount         = 0;
 
-    // 초기 대화 클릭
+    // 대화 박스 첫 클릭 → 선택지 보여주기
     dialogBox.addEventListener('click', () => {
       if (state === 0) {
         roomImage.classList.add('fade-out');
         setTimeout(() => {
-          roomImage.src = '/images/scienceroom.jpg';
           roomImage.classList.remove('fade-out');
           showChoices();
-          locationLabel.classList.remove('hidden');
         }, 600);
         state++;
       }
@@ -174,15 +171,17 @@
     // 선택지 클릭
     choiceButtons.querySelectorAll('button').forEach(btn => {
       btn.addEventListener('click', () => {
-        const key = btn.dataset.item;
+        const key  = btn.dataset.item;
         const info = itemData[key];
-        if (!info) return;
+        clickedCount++;
         choiceButtons.classList.add('fade-out');
         setTimeout(() => {
-          choiceButtons.classList.add('hidden');
+          // 책장일 때 → 암호 모달
           if (key === '책장') {
+            hideAllModals();
             passwordModal.classList.remove('hidden');
           } else {
+            hideAllModals();
             objectDescText.innerText = info.description;
             objectModal.classList.remove('hidden');
           }
@@ -190,19 +189,18 @@
       });
     });
 
-    // 책장 암호 입력
+    // 책장 암호 제출
     passwordSubmit.addEventListener('click', async () => {
       const answer = passwordInput.value.trim();
       try {
         const resp = await fetch('/api/check-password/scienceroom', {
           method: 'POST',
-          credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ answer })
         });
         if (!resp.ok) throw new Error();
-        // 암호 성공
         bookPasswordUnlocked = true;
+        passwordInput.value = '';
         hideAllModals();
         objectDescText.innerText = itemData['책장'].description;
         objectModal.classList.remove('hidden');
@@ -211,83 +209,69 @@
         passwordInput.value = '';
       }
     });
-    closePwdBtns.forEach(btn => btn.addEventListener('click', () => {
-      passwordModal.classList.add('hidden');
-      showChoices();
-    }));
 
-    // 모달 닫기 & NEXT 버튼 제어
-    function closeObjectModal() {
-      hideAllModals();
-      showChoices();
-      if (bookPasswordUnlocked && choiceButtons.querySelectorAll('button').length === totalItems) {
-        nextButton.classList.remove('hidden');
+    // 암호 모달 닫기
+    closePwdBtns.forEach(btn =>
+      btn.addEventListener('click', () => showChoices())
+    );
+    // 설명 모달 닫기
+    objectModal.querySelector('.close-button')
+      .addEventListener('click', () => showChoices());
+    objectModal.querySelector('.modal-backdrop')
+      .addEventListener('click', () => showChoices());
+
+    // 획득 확인 모달 닫기
+    confirmModal.querySelector('.close-button')
+      .addEventListener('click', () => showChoices());
+    confirmModal.querySelector('.modal-backdrop')
+      .addEventListener('click', () => showChoices());
+    btnCancel.addEventListener('click', () => showChoices());
+
+    // 아이템 획득 확인
+    objectModal.addEventListener('click', () => {
+      if (!itemData['벽 2'].acquirable) {
+        showChoices();
+      } else {
+        confirmModal.dataset.pendingKey = '가운';
+        confirmText.innerText = '가운 아이템을 획득하시겠습니까?';
+        confirmModal.classList.remove('hidden');
       }
-    }
-    function closeConfirmModal() {
-      confirmModal.classList.add('hidden');
-      closeObjectModal();
-    }
-    function closePasswordModal() {
-      passwordModal.classList.add('hidden');
-      showChoices();
-    }
+    });
 
-    objectModal.querySelector('.modal-backdrop').addEventListener('click', closeObjectModal);
-    objectModal.querySelector('.close-button').addEventListener('click', closeObjectModal);
-    confirmModal.querySelector('.modal-backdrop').addEventListener('click', closeConfirmModal);
-    confirmModal.querySelector('.close-button').addEventListener('click', closeConfirmModal);
-    btnCancel.addEventListener('click', closeConfirmModal);
-
-    // 아이템 획득
     btnOk.addEventListener('click', async () => {
       const key = confirmModal.dataset.pendingKey;
-      closeConfirmModal();
-      try {
-        const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, { method: 'POST' });
-        const json = await resp.json();
-        if (json.success) await loadInventory();
-        else alert(json.message);
-      } catch {
-        alert('획득에 실패했습니다.');
-      }
+      showChoices();
+      await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, {
+        method: 'POST'
+      });
+      loadInventory();
     });
 
-    // 설명 모달 클릭: 획득 가능 없으면 그냥 닫기
-    objectModal.addEventListener('click', () => {
-      if (currentItem && currentItem.acquirable) {
-        confirmModal.dataset.pendingKey = currentItem.dbKey;
-        confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
-        confirmModal.classList.remove('hidden');
-      } else {
-        closeObjectModal();
-      }
-    });
-
-    // NEXT 흐름
-    const nextDialogues = [
-      '이곳에서 나가려거든 여길 활용해야 한다는 생각이 선명해진다.',
-      '메모장을 자세히 살피기 위해 손을 뻗을 적, 실수로 책장의 문을 더 열어젖히며 근처 선반에 놓여 있던 용액의 비커가 돌연 바닥으로 떨어지면서 산산조각이 난다.',
-      '흩뿌려진 액체에서 연기가 피어오르더니 순식간에 장내를 뒤덮어 버린다.'
-    ];
-    let nextIdx = 0;
+    // NEXT 버튼 로직
     nextButton.addEventListener('click', () => {
       hideAllModals();
-      choiceButtons.classList.add('hidden');
-      nextButton.classList.add('hidden');
-      dialogText.innerText = nextDialogues[nextIdx++];
+      dialogText.innerText = '이곳에서 나가려면 이 물건을 써야 한다는 생각이 선명해진다.';
       dialogBox.classList.remove('hidden');
-    });
-    dialogBox.addEventListener('click', () => {
-      if (nextIdx < nextDialogues.length) {
-        dialogText.innerText = nextDialogues[nextIdx++];
-      } else {
+      nextButton.classList.add('hidden');
+      // 다음 클릭에 페이지 이동
+      dialogBox.addEventListener('click', () => {
         window.location.href = '/다음페이지';
-      }
+      }, { once: true });
     });
 
     // 인벤토리 토글
     inventoryBtn.addEventListener('click', toggleInventory);
+
+    // 클릭 수 + 암호 성공 조건 만족 시 NEXT 노출
+    function checkNext() {
+      if (clickedCount >= totalItems && bookPasswordUnlocked) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+    // 각 모달 닫힐 때마다 NEXT 체크
+    [passwordModal, objectModal, confirmModal].forEach(modal => {
+      modal.addEventListener('transitionend', checkNext);
+    });
   </script>
 </body>
 </html>
