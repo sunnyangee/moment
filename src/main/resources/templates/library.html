@@ -106,12 +106,7 @@
       "반납대": { description: "만화책 '신이 말하는 대로'...", acquirable: false },
       "도서관 데스크": { description: "", acquirable: false },
     };
-    const nextDialogues = [
-      "첫 번째 후속 대사입니다.",
-      "두 번째 후속 대사입니다.",
-      "세 번째 후속 대사입니다."
-    ];
-    let nextIdx = 0;
+    
     let state = 0;
     const clickedItems = new Set();
     let libraryPasswordUnlocked = false;
@@ -283,13 +278,8 @@
 
     // 7) NEXT 버튼 클릭 → 후속 대사 순차 표시
     nextButton.addEventListener('click', () => {
-      choiceButtons.classList.add('hidden');
-      paperChoiceButtons.classList.add('hidden');
-      if (nextIdx < nextDialogues.length) {
-        nextButton.innerText = nextDialogues[nextIdx++];
-      }
+      window.location.href = '/teachersroom';  // 원하는 다음 URL로 변경
     });
-
     // 인벤토리 닫기
     inventoryClose.addEventListener('click', toggleInventory);
   });
