@@ -16,7 +16,7 @@ import java.util.List;
 public class HomeController {
 
     private static final List<String> SEQUENCE = List.of(
-        "start", "3-2", "3-3", "homeroom", "cafeteria", "nurse-office", "principalsoffice", "1ftoilet", "audiovisualroom", "overnightroom", "counselingroom", "1felevator", "1fstairs", "library", "teachersroom", "computerroom", "clubroom1", "clubroom2", "clubroom3", "artroom", "broadcastingroom", "studentcouncilroom", "bridge", "gym", "gym2f", "clubroom4", "clubroom5", "clubroom6", "stairs2f", "musicroom", "conveniencestore", "clubroom7", "clubroom8", "englishroom", "supplyroom", "scienceroom", "powersupplyroom", "computerserverroom", "pharmacy", "convenience", "atm", "foodcourt", "cookingroom"
+        "start", "3-2", "3-3", "homeroom", "cafeteria", "nurse-office", "principalsoffice", "1ftoilet", "audiovisualroom", "overnightroom", "counselingroom", "1felevator", "1fstairs", "library", "teachersroom", "computerroom", "clubroom1", "clubroom2", "clubroom3", "artroom", "broadcastingroom", "studentcouncilroom", "bridge", "gym", "gym2f", "clubroom4", "clubroom5", "clubroom6", "stairs2f", "musicroom", "conveniencestore", "clubroom7", "clubroom8", "englishroom", "supplyroom", "scienceroom", "powersupplyroom", "computerserverroom", "pharmacy", "convenience", "atm", "foodcourt", "cookingroom", "rehabilitationroom", "allergy", "radiation"
     );
 
     private final ProgressService progressService;
@@ -244,6 +244,20 @@ public class HomeController {
     @GetMapping("/cookingroom") // ← 하이픈 없이
     public String cookingroom(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
         return handleStage("cookingroom", userPrincipal, model);
+    }
+
+    @GetMapping("/rehabilitationroom") // ← 하이픈 없이
+    public String rehabilitationroom(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("rehabilitationroom", userPrincipal, model);
+    }
+
+    @GetMapping("/allergy") // ← 하이픈 없이
+    public String allergy(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("allergy", userPrincipal, model);
+    }
+    @GetMapping("/radiation") // ← 하이픈 없이
+    public String radiation(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("radiation", userPrincipal, model);
     }
 
 
