@@ -227,7 +227,7 @@ public class HomeController {
     public String pharmacy(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
         return handleStage("pharmacy", userPrincipal, model);
     }
-    @GetMapping("/convenience   ") // ← 하이픈 없이
+    @GetMapping("/convenience") // ← 하이픈 없이
     public String convenience(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
         return handleStage("convenience", userPrincipal, model);
     }

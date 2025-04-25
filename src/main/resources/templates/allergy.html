@@ -25,8 +25,9 @@
       <div class="ui-overlay">
         <!-- 선택지 -->
         <div id="choice-buttons" class="choice-buttons hidden">
-          <button data-item="객석">객석</button>
-          <button data-item="창문 난간">창문 난간</button>
+          <button data-item="진단 장비">진단 장비</button>
+          <button data-item="의사 책상">의사 책상</button>
+          <button data-item="환자 대기 의자">환자 대기 의자</button>
         </div>
 
         <!-- 대화 박스 -->
@@ -92,8 +93,9 @@
 
     const clickedItems = new Set();
     const itemData = {
-      "객석":   { description: "플라스틱 재질의 의자가 줄지어 늘어져 있다. 체육관 1층이 훤히 보인다.", acquirable: false },
-      "창문 난간": { description: "난간 위 일렬로 놓인 화분의 절반은 싱싱하고, 절반은 죽어 있다. ", acquirable: false }
+      "진단 장비":   { description: "플라스틱 재질의 의자가 줄지어 늘어져 있다. 체육관 1층이 훤히 보인다.", acquirable: false },
+      "의사 책상": { description: "난간 위 일렬로 놓인 화분의 절반은 싱싱하고, 절반은 죽어 있다. ", acquirable: false },
+      "의사 책상": { dbKey: "기록지 파일",description: "난간 위 일렬로 놓인 화분의 절반은 싱싱하고, 절반은 죽어 있다. ", acquirable: true },
     };
     const totalItems = Object.keys(itemData).length;
 
