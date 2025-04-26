@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>방사선 종양학과</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+    <!-- 키패드 입력 모달 -->
+  <div id="keypad-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3>방사선 종양학과로 이동하기 위해서는 영문 키패드를 입력해야 한다. <br>CODE: QKJ2048</h3>
+      <input type="text" id="keypad-input" placeholder="insert" maxlength="20"/>
+      <button id="keypad-submit">확인</button>
+    </div>
+  </div>
+  
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/gym2f.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">B1 방사선 종양학과</div>
+
+      <div class="ui-overlay">
+        <!-- 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="진료 대기실">진료 대기실</button>
+          <button data-item="방사선실">방사선실</button>
+        </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">무거운 공기가 밀려온다. 금속 냄새와 기계 특유의 공기가 폐를 찌른다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <!-- 설명 모달 -->
+        <div id="object-modal" class="object-modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">×</button>
+            <div class="dialog-box">
+              <p id="object-description-text"></p>
+              <div class="dialog-indicator">▼</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <button class="close-button">×</button>
+          <h3>인벤토리</h3>
+          <ul id="inventory-list"></ul>
+        </div>
+      </div>
+
+      <!-- NEXT 버튼 -->
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    function setViewportSize() {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    }
+    window.addEventListener('resize', setViewportSize);
+    window.addEventListener('load', setViewportSize);
+
+    const wrapper        = document.querySelector('.viewport-wrapper');
+    const ua             = navigator.userAgent.toLowerCase();
+    const dialogBox      = document.getElementById('dialog-box');
+    const locationLabel  = document.getElementById('location-label');
+    const choiceButtons  = document.getElementById('choice-buttons');
+    const roomImage      = document.getElementById('room-image');
+    const objectModal    = document.getElementById('object-modal');
+    const objectDescText = document.getElementById('object-description-text');
+    const nextButton     = document.getElementById('next-button');
+    const inventoryBtn   = document.querySelector('.inventory-button');
+    const inventoryModal = document.getElementById('inventory-modal');
+    const inventoryList  = document.getElementById('inventory-list');
+
+    wrapper.classList.add(
+      /android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os'
+    );
+
+    const clickedItems = new Set();
+    const itemData = {
+      "진단 장비":   { description: "낡은 피부 반응 검사기가 구석에 덩그러니 놓여 있다. 작동은 되지 않지만, 기기 위엔 피부 반응에 관련된 검사지가 놓여 있다.", acquirable: false },
+      "의사 책상": { dbKey: "기록지 파일", description: "책상 위에 오래된 기록지 파일이 정리되어 있다. 한 켠에 작은 잠금 서랍이 있지만, 자물쇠가 걸려 있다. ", acquirable: true },
+      "환자 대기 의자": { description: "접이식 의자가 반쯤 넘어가 있다. 그 밑에서 약간 찢긴 종이 하나가 놓여 있다. 숫자와 기호가 적혀 있으나, 의미는 알 수 없다.", acquirable: true },
+    };
+    const totalItems = Object.keys(itemData).length;
+
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        inventoryList.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          inventoryList.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+    loadInventory();
+
+    function toggleInventory() {
+      inventoryModal.classList.toggle('hidden');
+    }
+    inventoryBtn.addEventListener('click', toggleInventory);
+    inventoryModal.querySelector('.close-button').addEventListener('click', toggleInventory);
+    inventoryModal.querySelector('.modal-backdrop').addEventListener('click', toggleInventory);
+
+    function showObjectModal(text) {
+      choiceButtons.classList.add('fade-out');
+      setTimeout(() => {
+        choiceButtons.classList.add('hidden');
+        objectDescText.innerText = text;
+        objectModal.classList.remove('hidden');
+      }, 600);
+    }
+
+    function closeObjectModal() {
+      objectModal.classList.add('hidden');
+      choiceButtons.classList.remove('hidden','fade-out');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size >= totalItems) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+
+    objectModal.querySelector('.modal-backdrop').addEventListener('click', closeObjectModal);
+    objectModal.querySelector('.close-button').addEventListener('click', closeObjectModal);
+    objectModal.querySelector('.modal-content').addEventListener('click', closeObjectModal);
+
+    choiceButtons.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.item;
+        const item = itemData[key];
+        if (!item) return;
+        clickedItems.add(key);
+        showObjectModal(item.description);
+      });
+    });
+
+    nextButton.addEventListener('click', () => {
+      window.location.href = '/radiation';
+    });
+
+    let state = 0;
+    dialogBox.addEventListener('click', () => {
+      if (state === 0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(() => {
+          roomImage.src = '/images/gym2f.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        }, 600);
+        state++;
+      }
+    });
+
+    // 키패드 모달 요소
+    const keypadModal  = document.getElementById('keypad-modal');
+    const keypadInput  = document.getElementById('keypad-input');
+    const keypadSubmit = document.getElementById('keypad-submit');
+
+
+    // 처음 로딩되면 키패드 모달 보이기
+    window.addEventListener('DOMContentLoaded', () => {
+    keypadModal.classList.remove('hidden');
+    dialogBox.classList.add('hidden');
+    });
+
+    // 제출 버튼 클릭
+    keypadSubmit.addEventListener('click', async () => {
+    const answer = keypadInput.value.trim();
+      try {
+        const resp = await fetch('/api/check-password/allergy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer })
+        });
+        if (!resp.ok) throw new Error();
+
+        keypadModal.classList.add('hidden');
+        dialogBox.querySelector('#dialog-text').textContent =
+          "무거운 공기가 밀려온다. 금속 냄새와 기계 특유의 공기가 폐를 찌른다.";
+        dialogBox.classList.remove('hidden');
+      } catch {
+        alert("키패드 입력이 틀렸습니다.");
+        keypadInput.value = "";
+      }
+    });
+
+  </script>
+</body>
+</html>
