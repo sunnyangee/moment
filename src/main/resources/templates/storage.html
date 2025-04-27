@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>옥상 창고</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <!-- 키패드 입력 모달 -->
+  <div id="keypad-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3>옥상 창고를 열기 위해서는 영문 키패드를 입력해야 한다. <br>CODE: QER0623</h3>
+      <input type="text" id="keypad-input" placeholder="insert" maxlength="20"/>
+      <button id="keypad-submit">확인</button>
+    </div>
+  </div>
+  
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/35.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">옥상 창고</div>
+
+      <div class="ui-overlay">
+        <!-- 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="의료 기기 적치 구역">의료 기기 적치 구역</button>
+          <button data-item="기계실">기계실</button>
+          <button data-item="CCTV 박스">CCTV 박스</button>
+          <button data-item="옥상 계단실 출입구">옥상 계단실 출입구</button>
+        </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">옥상 창고를 열기 위해서는 영문 키패드를 입력해야 한다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <!-- 설명 모달 -->
+        <div id="object-modal" class="object-modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <div class="dialog-box">
+              <p id="object-description-text"></p>
+              <div class="dialog-indicator">▼</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 획득 확인 모달 -->
+        <div id="confirm-acquire-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
+            <button id="btn-acquire-ok">확인</button>
+            <button id="btn-acquire-cancel">취소</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <button class="close-button">&times;</button>
+          <h3>인벤토리</h3>
+          <ul id="inventory-list"></ul>
+        </div>
+      </div>
+
+      <!-- NEXT 버튼 -->
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    function setViewportSize() {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    }
+    window.addEventListener('resize', setViewportSize);
+    window.addEventListener('load', setViewportSize);
+
+    const wrapper = document.querySelector('.viewport-wrapper');
+    const ua = navigator.userAgent.toLowerCase();
+    wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
+
+    const dialogBox      = document.getElementById('dialog-box');
+    const locationLabel  = document.getElementById('location-label');
+    const choiceButtons  = document.getElementById('choice-buttons');
+    const roomImage      = document.getElementById('room-image');
+    const objectModal    = document.getElementById('object-modal');
+    const objectDescText = document.getElementById('object-description-text');
+    const confirmModal   = document.getElementById('confirm-acquire-modal');
+    const confirmText    = document.getElementById('confirm-acquire-text');
+    const btnOk          = document.getElementById('btn-acquire-ok');
+    const btnCancel      = document.getElementById('btn-acquire-cancel');
+    const nextButton     = document.getElementById('next-button');
+    const inventoryBtn   = document.querySelector('.inventory-button');
+    const inventoryModal = document.getElementById('inventory-modal');
+    const inventoryList  = document.getElementById('inventory-list');
+
+    const clickedItems = new Set();
+    let currentItem = null;
+    let state = 0;
+
+    const itemData = {
+      "의료 기기 적치 구역": { dbKey:"보행차", description: "의도적으로 정리되지 않은 흔적과 장비 사이에는 먼지가 가득 쌓여 쾌쾌한 내음이 번진다. 한쪽에는 보행차 두어 개가 널부러져 있다.", acquirable: true },
+      "기계실": { dbKey: "손전등 3", description: "창고 내부의 커다란 금속 문을 연다. 어두컴컴한 내부를 밝히기 위한 손전등이 입구에 구비되어 있다.\n안쪽은 각종 기계들이 놓여 있고, 커다란 냉각 장치들이 천장에 매달려 있어 서늘한 공기가 감돈다. ", acquirable: true },
+      "CCTV 박스": { description: "부서진 CCTV 카메라와 연결 박스가 덜렁거린다. 전선은 잘려 있으며, 안쪽에서 기록된 듯한 테이프 조각이 나온다. 짧은 시간 동안 찍힌 듯한 프레임 속 인물은 식별할 수 없다.", acquirable: false },
+      "옥상 계단실 출입구": { description: "철문 근처에는 오래된 장비들이 어지럽게 쌓여 있다. 부식된 금속 조각, 때로는 불에 탄 듯한 흔적이 남아 있는 물건들이 보인다.", acquirable: false}
+    };
+    const totalItems = Object.keys(itemData).length;
+
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        inventoryList.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          inventoryList.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+    loadInventory();
+
+    function toggleInventory() {
+      inventoryModal.classList.toggle('hidden');
+    }
+    inventoryBtn.addEventListener('click', toggleInventory);
+    inventoryModal.querySelector('.modal-backdrop').addEventListener('click', toggleInventory);
+    inventoryModal.querySelector('.close-button').addEventListener('click', toggleInventory);
+
+    function showObjectModal(text) {
+      choiceButtons.classList.add('fade-out');
+      setTimeout(() => {
+        choiceButtons.classList.add('hidden');
+        objectDescText.innerText = text;
+        objectModal.classList.remove('hidden');
+      }, 600);
+    }
+
+    function closeObjectModal() {
+      objectModal.classList.add('hidden');
+      confirmModal.classList.add('hidden');
+      choiceButtons.classList.remove('fade-out', 'hidden');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size >= totalItems) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+
+    objectModal.querySelector('.modal-backdrop').addEventListener('click', closeObjectModal);
+    objectModal.querySelector('.modal-content').addEventListener('click', e => e.stopPropagation());
+
+    confirmModal.querySelector('.modal-backdrop').addEventListener('click', closeObjectModal);
+    confirmModal.querySelector('.modal-content').addEventListener('click', e => e.stopPropagation());
+    btnCancel.addEventListener('click', closeObjectModal);
+
+    choiceButtons.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.item;
+        const item = itemData[key];
+        if (!item) return;
+        clickedItems.add(key);
+        currentItem = item;
+        showObjectModal(item.description);
+      });
+    });
+
+    document.querySelector('#object-modal .dialog-box').addEventListener('click', () => {
+      if (!currentItem || !currentItem.acquirable || !currentItem.dbKey) {
+        return closeObjectModal();
+      }
+      confirmModal.dataset.pendingKey = currentItem.dbKey;
+      confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+      confirmModal.classList.remove('hidden');
+    });
+
+    btnOk.addEventListener('click', async () => {
+      const key = confirmModal.dataset.pendingKey;
+      closeObjectModal();
+      let json = { success: false };
+      try {
+        const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, { method: 'POST' });
+        json = await resp.json();
+      } catch {}
+      if (json.success) {
+        await loadInventory();
+      } else {
+        alert(json.message);
+      }
+    });
+
+    dialogBox.addEventListener('click', () => {
+      if (state === 0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(() => {
+          roomImage.src = '/images/35.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        }, 600);
+        state++;
+      }
+    });
+
+    // NEXT 텍스트 출력용
+    const nextDialogues = [
+    "이만 돌아가 지금까지 얻은 것을 정리하는 게 좋겠다.",
+    "조사 완료"
+    ];
+    let nextIdx = 0;
+
+    // NEXT 버튼 누르면 대사 출력
+    nextButton.addEventListener('click', () => {
+    if (nextIdx < nextDialogues.length) {
+        nextButton.textContent = nextDialogues[nextIdx++];
+    } else {
+        nextButton.disabled = true;    // 더 이상 출력할 대사가 없으면 버튼 비활성화
+        nextButton.style.opacity = 0.5; // 시각적으로 흐리게
+        // 또는 nextButton.remove(); 로 버튼 자체를 화면에서 없앨 수도 있음
+    }
+    });
+
+
+    // 키패드 모달
+    const keypadModal = document.getElementById('keypad-modal');
+    const keypadInput = document.getElementById('keypad-input');
+    const keypadSubmit = document.getElementById('keypad-submit');
+
+    window.addEventListener('DOMContentLoaded', () => {
+      keypadModal.classList.remove('hidden');
+      dialogBox.classList.add('hidden');
+    });
+
+    keypadSubmit.addEventListener('click', async () => {
+      const answer = keypadInput.value.trim();
+      try {
+        const resp = await fetch('/api/check-password/storage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer })
+        });
+        if (!resp.ok) throw new Error();
+        keypadModal.classList.add('hidden');
+        dialogBox.querySelector('#dialog-text').textContent = "고정되지 않은 작은 철제 문이 툭 열리자, 내부에서는 비닐과 곰팡내가 짙게 퍼져 나온다. 햇빛이 닿지 않는 좁은 공간이다. ";
+        dialogBox.classList.remove('hidden');
+      } catch {
+        alert("키패드 입력이 틀렸습니다.");
+        keypadInput.value = "";
+      }
+    });
+
+  </script>
+</body>
+</html>

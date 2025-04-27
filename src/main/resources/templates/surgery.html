@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>외과</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/19.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">1F 외과</div>
+
+      <div class="ui-overlay">
+        <!-- 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="수술 계획 게시판">수술 계획 게시판</button>
+          <button data-item="환자 복용 기록지">환자 복용 기록지</button>
+          <button data-item="수술 도구함">수술 도구함</button>
+        </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">문패는 반쯤 떨어져 나간 채 매달려 있다. 문을 열자 알코올과 약품 냄새가 뒤섞인 채 폐부를 채운다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <!-- 설명 모달 -->
+        <div id="object-modal" class="object-modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">×</button>
+            <div class="dialog-box">
+              <p id="object-description-text"></p>
+              <div class="dialog-indicator">▼</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 획득 확인 모달 -->
+        <div id="confirm-acquire-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">×</button>
+            <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
+            <button id="btn-acquire-ok">확인</button>
+            <button id="btn-acquire-cancel">취소</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button" onclick="toggleInventory()">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <div class="modal-backdrop" onclick="toggleInventory()"></div>
+        <div class="modal-content">
+          <button class="close-button" onclick="toggleInventory()">×</button>
+          <h3>인벤토리</h3>
+          <ul id="inventory-list"></ul>
+        </div>
+      </div>
+
+      <!-- NEXT -->
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <!-- ✅ 불필요한 약 수납장 조건 및 열쇠 소비 로직 제거된 전체 코드 -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      async function loadInventory() {
+        try {
+          const resp = await fetch('/api/items');
+          if (!resp.ok) throw new Error(resp.status);
+          const items = await resp.json();
+          const ul = document.getElementById('inventory-list');
+          ul.innerHTML = '';
+          items.forEach(item => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+            ul.appendChild(li);
+          });
+        } catch (e) {
+          console.error('인벤토리 로드 실패', e);
+        }
+      }
+    
+      loadInventory();
+    
+      function setViewportSize() {
+        document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+      }
+      window.addEventListener('resize', setViewportSize);
+      window.addEventListener('load', setViewportSize);
+    
+      const choiceButtons = document.getElementById('choice-buttons');
+      const dialogBox = document.getElementById('dialog-box');
+      const roomImage = document.getElementById('room-image');
+      const locationLabel = document.getElementById('location-label');
+      const objectModal = document.getElementById('object-modal');
+      const objectDescText = document.getElementById('object-description-text');
+      const confirmModal = document.getElementById('confirm-acquire-modal');
+      const confirmText = document.getElementById('confirm-acquire-text');
+      const btnOk = document.getElementById('btn-acquire-ok');
+      const btnCancel = document.getElementById('btn-acquire-cancel');
+      const inventoryModal = document.getElementById('inventory-modal');
+      const inventoryList = document.getElementById('inventory-list');
+      const nextButton = document.getElementById('next-button');
+    
+      const wrapper = document.querySelector('.viewport-wrapper');
+      wrapper.classList.add(/android|iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) ? 'mobile-os' : 'desktop-os');
+    
+      const clickedItems = new Set();
+      let currentItem = null;
+    
+      const itemData = {
+        "수술 계획 게시판":      { description: "한쪽 벽면에 화이트 보드가 붙어 있다. 수술 일정이 희미하게 남아 있지만, 특정 날짜에 칼자국처럼 깊게 긁힌 흔적이 있어 알아볼 수 없다. ", acquirable: false },
+        "환자 복용 기록지":      { dbKey: "외과 기록",description: "수술 전후 복용 약물이 적힌 종이들이 있다. 일부 약물이 반복적으로 등장하며, 어쩐지 의심스러운 마킹이 있다.", acquirable: true },
+        "수술 도구함":      { dbKey: "파쇄 예정 종이", description: "수술 도구함을 열면, 파쇄 스탬프가 찍힌 서류가 있다.", acquirable: true }
+      };
+    
+      window.toggleInventory = () => inventoryModal.classList.toggle('hidden');
+    
+      function showObjectModal(text) {
+        choiceButtons.classList.add('fade-out');
+        setTimeout(() => {
+          choiceButtons.classList.add('hidden');
+          objectDescText.innerText = text;
+          objectModal.classList.remove('hidden');
+        }, 600);
+      }
+    
+      function closeObjectModal() {
+        objectModal.classList.add('hidden');
+        confirmModal.classList.add('hidden');
+        choiceButtons.classList.remove('hidden', 'fade-out');
+        choiceButtons.classList.add('fade-in');
+        setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+        const totalButtons = [...choiceButtons.querySelectorAll('button')].length;
+        if (clickedItems.size >= totalButtons) {
+          nextButton.classList.remove('hidden');
+        }
+      }
+    
+      document.querySelectorAll('#object-modal .modal-backdrop, #object-modal .close-button')
+        .forEach(el => el.addEventListener('click', closeObjectModal));
+      document.querySelector('#object-modal .modal-content')
+        .addEventListener('click', e => e.stopPropagation());
+    
+      document.querySelectorAll('#confirm-acquire-modal .modal-backdrop, #confirm-acquire-modal .close-button')
+        .forEach(el => el.addEventListener('click', closeConfirmModal));
+      document.querySelector('#confirm-acquire-modal .modal-content')
+        .addEventListener('click', e => e.stopPropagation());
+      btnCancel.addEventListener('click', closeConfirmModal);
+    
+      function closeConfirmModal() {
+        confirmModal.classList.add('hidden');
+        closeObjectModal();
+      }
+    
+      choiceButtons.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const label = btn.dataset.item;
+          const cleanedLabel = label.replaceAll('\u00A0', ' ').trim();
+          clickedItems.add(cleanedLabel);
+          currentItem = itemData[cleanedLabel] || null;
+          showObjectModal(currentItem.description);
+        });
+      });
+    
+      document.querySelector('#object-modal .dialog-box').addEventListener('click', () => {
+        if (!currentItem || !currentItem.acquirable) {
+          return closeObjectModal();
+        }
+        confirmModal.dataset.pendingKey = currentItem.dbKey;
+        confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+        confirmModal.classList.remove('hidden');
+      });
+    
+      btnOk.addEventListener('click', async () => {
+        const key = confirmModal.dataset.pendingKey;
+        closeConfirmModal();
+    
+        let json = { success: false, message: "획득에 실패했습니다." };
+        try {
+          const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, { method: 'POST' });
+          json = await resp.json();
+        } catch {}
+    
+        if (json.success) {
+          await loadInventory();
+        } else {
+          alert(json.message);
+        }
+    
+        closeObjectModal();
+      });
+    
+      let state = 0;
+      dialogBox.addEventListener('click', () => {
+        if (state === 0) {
+          roomImage.classList.add('fade-out');
+          setTimeout(() => {
+            roomImage.src = '/images/19.jpg';
+            roomImage.classList.remove('fade-out');
+            dialogBox.classList.add('hidden');
+            choiceButtons.classList.remove('hidden');
+            locationLabel.classList.remove('hidden');
+          }, 600);
+          state = 1;
+        }
+      });
+    
+      nextButton.addEventListener('click', () => window.location.href = '/medicine');
+    });
+    </script>
+    
+</body>
+</html>

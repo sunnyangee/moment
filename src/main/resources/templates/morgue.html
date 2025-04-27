@@ -9,7 +9,7 @@
 <body>
   <div class="viewport-wrapper">
     <div class="room-container">
-      <img id="room-image" src="/images/classroom2.jpg" alt="방 이미지" class="room-image"/>
+      <img id="room-image" src="/images/11.jpg" alt="방 이미지" class="room-image"/>
 
       <div id="location-label" class="location-label hidden">B1 영안실</div>
 
@@ -131,7 +131,7 @@
       if (state === 0) {
         roomImage.classList.add('fade-out');
         setTimeout(() => {
-          roomImage.src = '/images/classroom2.jpg';
+          roomImage.src = '/images/11.jpg';
           roomImage.classList.remove('fade-out');
           dialogBox.classList.add('hidden');
           choiceButtons.classList.remove('hidden');
@@ -157,7 +157,7 @@
     objectModal.querySelector('#object-description').addEventListener('click', closeObjectModal);
 
     nextButton.addEventListener('click', () => {
-      window.location.href = '/administation';
+      window.location.href = '/administration';
     });
   </script>
 </body>

@@ -1,0 +1,209 @@
+<!-- ✅ 수정된 HTML (숙직실) -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>물탱크실</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/30.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">물탱크실</div>
+
+      <div class="ui-overlay">
+        <!-- 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="노후 물탱크">노후 물탱크</button>
+          <button data-item="보조 배수 탱크">보조 배수 탱크</button>
+          <button data-item="벽면 배관 덕트">벽면 배관 덕트</button>
+          <button data-item="기계 조작 패널">기계 조작 패널</button>
+        </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">굴뚝처럼 솟은 콘트리트 구조물에 철문이 달려 있다. 문을 열자 축축한 기운이 가득한 방이 드러난다. 벽과 천장은 진득한 곰팡이로 뒤덮여 있다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <!-- 설명 모달 -->
+        <div id="object-modal" class="object-modal hidden">
+          <button class="close-button" onclick="closeObjectModal()">X</button>
+          <div id="object-description" class="dialog-box">
+            <p id="object-description-text"></p>
+            <div class="dialog-indicator">▼</div>
+          </div>
+        </div>
+
+        <!-- 획득 확인 모달 -->
+        <div id="confirm-acquire-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
+            <button id="btn-acquire-ok">확인</button>
+            <button id="btn-acquire-cancel">취소</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button" onclick="toggleInventory()">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <button class="close-button" onclick="toggleInventory()">X</button>
+        <h3>인벤토리</h3>
+        <ul id="inventory-list"></ul>
+      </div>
+
+      <!-- NEXT 버튼 -->
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        const ul = document.getElementById('inventory-list');
+        ul.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          ul.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+
+    loadInventory();
+
+    function toggleInventory() {
+      document.getElementById('inventory-modal').classList.toggle('hidden');
+    }
+
+    function closeObjectModal() {
+      document.getElementById('object-modal').classList.add('hidden');
+      document.getElementById('confirm-acquire-modal').classList.add('hidden');
+      choiceButtons.classList.remove('fade-out', 'hidden');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size === totalItems) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+
+    const choiceButtons = document.getElementById('choice-buttons');
+    const dialogBox = document.getElementById('dialog-box');
+    const locationLabel = document.getElementById('location-label');
+    const roomImage = document.getElementById('room-image');
+    const objectModal = document.getElementById('object-modal');
+    const objectDescText = document.getElementById('object-description-text');
+    const nextButton = document.getElementById('next-button');
+    const inventoryModal = document.getElementById('inventory-modal');
+    const inventoryList = document.getElementById('inventory-list');
+    const confirmModal = document.getElementById('confirm-acquire-modal');
+    const confirmText = document.getElementById('confirm-acquire-text');
+    const btnOk = document.getElementById('btn-acquire-ok');
+    const btnCancel = document.getElementById('btn-acquire-cancel');
+
+    const clickedItems = new Set();
+    let currentItem = null;
+
+    const wrapper = document.querySelector('.viewport-wrapper');
+    const ua = navigator.userAgent.toLowerCase();
+    wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
+
+    const itemData = {
+      "노후 물탱크": {
+        description: "벽 한쪽에는 손자국이 찍혀 있다. 외벽에 균열이 가 있고, 낡은 배관 하나가 느리게 물이 새고 있다.",
+        acquirable: false
+      },
+      "보조 배수 탱크": {
+        description: "비교적 작은 크기의 탱크이다. 입구가 반쯤 열려 있고, 내부의 고인 물은 혼탁하며 접근하기조차 어려운 냄새를 풍긴다.",
+        acquirable: false
+      },
+      "벽면 배관 덕트": {
+        dbKey: "렌치 4", 
+        description: "배관은 이끼와 곰팡이로 뒤덮여 있고. 그 중 일부는 벽면에서 떨어져 나와 덜렁거린다. 배관 일부에는 렌치가 너저분히 놓여져 있다.",
+        acquirable: true
+      },
+      "기계 조작 패널": {
+        description: "오래된 제어판에는 각종 다이얼과 버튼, 스위치가 흩어져 있다. 일부는 완전히 눌리지 않으며, 버튼 가장자리에는 핏자국 같은 얼룩이 남아 있다.",
+        acquirable: false
+      }
+    };
+
+    const totalItems = Object.keys(itemData).length;
+
+    dialogBox.addEventListener('click', () => {
+      if (state === 0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(() => {
+          roomImage.src = '/images/30.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        }, 600);
+        state++;
+      }
+    });
+
+    document.querySelectorAll('#choice-buttons button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.item;
+        const info = itemData[key];
+        if (!info) return;
+        clickedItems.add(key);
+        currentItem = info;
+        choiceButtons.classList.add('fade-out');
+        setTimeout(() => {
+          choiceButtons.classList.add('hidden');
+          objectDescText.innerText = info.description;
+          objectModal.classList.remove('hidden');
+        }, 600);
+      });
+    });
+
+    objectModal.addEventListener('click', () => {
+      if (!currentItem || !currentItem.acquirable) {
+        return closeObjectModal();
+      }
+      confirmModal.dataset.pendingKey = currentItem.dbKey;
+      confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+      confirmModal.classList.remove('hidden');
+    });
+
+    btnOk.addEventListener('click', async () => {
+      const key = confirmModal.dataset.pendingKey;
+      closeObjectModal();
+      let json = { success: false };
+      try {
+        const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, {
+          method: 'POST'
+        });
+        json = await resp.json();
+      } catch {}
+      if (json.success) {
+        await loadInventory();
+      } else {
+        alert(json.message);
+      }
+    });
+
+    btnCancel.addEventListener('click', closeObjectModal);
+
+    let state = 0;
+    nextButton.addEventListener('click', () => {
+      window.location.href = '/flower';
+    });
+  </script>
+</body>
+</html>

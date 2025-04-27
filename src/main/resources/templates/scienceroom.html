@@ -38,6 +38,7 @@
         <div id="password-modal" class="modal hidden">
           <div class="modal-backdrop"></div>
           <div class="modal-content">
+            <button class="close-button">×</button>
             <p>잠금 장치가 붙어 있는 책장입니다.</p>
             <input type="text"
                    id="password-input"
@@ -155,7 +156,7 @@
       '실험대':    {description:'실험을 수행할 수 있는 넓은 작업 공간으로, 옅은 얼룩이 진 가운 두어벌이 구겨진 채 올라가 있다.', acquirable:false},
       '세면대':    {description:'금이 간 비커가 놓여져 있다. 투명한 무언가가 안에 들어있는데, 맡아보면 코 끝이 저릿하도록 시원한 느낌이 확 풍긴다. 짐작건대, 아마 과산화수소?', acquirable:false},
       '인체 모형': {description:'반신 크기의 인체 모형이다. 배 부분이 뚫려 내장 기관이 보이는 형태며, 인위적으로 강조한 색과 코팅이 어색한 느낌을 준다. 조금 젖어있는 것 같기도…… 하다. 가슴 부분에 마커로 낙서가 되어 있다. \n\nCODE: QYT9418', acquirable:false},
-      '벽 1':     {description:'벽걸이에 안전한 실험을 위한 고글이 걸려 있다. 넉넉하게 서른 개 즈음이 걸린 듯하다. ', acquirable:false},
+      '벽 1':     {description:'벽걸이에 안전한 실험을 위한 고글이 걸려 있다. 넉넉하게 서른 개 즈음이 걸린 듯하다.', acquirable:false},
       '벽 2':     {dbKey:'가운',description:'행거에 한 반 인원수 만큼의 가운이 놓여 있다. 다만, 쓸만한 것은 네 벌 정도다.', acquirable: true},
       '책장':     {description:'과학 서적이 빽빽하게 놓인 이단 책장이다. 책 위 메모장엔 다음과 같이 쓰여 있다. [나가기 위해서 내가 시도해 본 것]', acquirable:false}
     };
@@ -163,6 +164,7 @@
     let state                = 0;
     let bookPasswordUnlocked = false;
     let clickedCount         = 0;
+    let currentItem = null; // 추가
 
     // 다음 대사 리스트
     const nextDialogues = [
@@ -208,6 +210,7 @@
         choiceButtons.classList.add('fade-out');
         setTimeout(() => {
           hideAllModals();
+          currentItem = itemData[key]; // 추가된 부분
           if (key === '책장') {
             passwordModal.classList.remove('hidden');
           } else {
@@ -237,21 +240,30 @@
         alert('비밀번호가 틀렸습니다.');
       }
     });
+
     // 암호 모달 닫기
     passwordModal.querySelector('.close-button')
-      .addEventListener('click',     showChoices);
+      .addEventListener('click', showChoices);
     passwordModal.querySelector('.modal-backdrop')
-      .addEventListener('click',     showChoices);
+      .addEventListener('click', showChoices);
 
     // 설명 모달 닫기
     objectModal.querySelector('.close-button')
-      .addEventListener('click',     showChoices);
+      .addEventListener('click', showChoices);
     objectModal.querySelector('.modal-backdrop')
-      .addEventListener('click',     showChoices);
-    objectModal.querySelector('.dialog-box')
-      .addEventListener('click',     showChoices);
-    objectModal.querySelector('.modal-content')
-      .addEventListener('click', e=>e.stopPropagation());
+      .addEventListener('click', showChoices);
+
+    // 설명 모달 dialog-box 클릭 처리
+    document.querySelector('#object-modal .dialog-box').addEventListener('click', () => {
+      if (!currentItem || !currentItem.acquirable) {
+        hideAllModals();
+        showChoices();
+        return;
+      }
+      confirmModal.dataset.pendingKey = currentItem.dbKey;
+      confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+      confirmModal.classList.remove('hidden');
+    });
 
     // 획득 확인 모달
     confirmModal.querySelector('.close-button')
@@ -260,20 +272,10 @@
       .addEventListener('click', showChoices);
     btnCancel.addEventListener('click', showChoices);
 
-    document.querySelector('#object-modal .dialog-box').addEventListener('click', () => {
-        if (!currentItem || !currentItem.acquirable) {
-          return closeObjectModal();
-        }
-        confirmModal.dataset.pendingKey = currentItem.dbKey;
-        confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
-        confirmModal.classList.remove('hidden');
-    });
-
-
     btnOk.addEventListener('click', async () => {
       const key = confirmModal.dataset.pendingKey;
       showChoices();
-      await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`,{method:'POST'});
+      await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, {method:'POST'});
       loadInventory();
     });
 
@@ -284,30 +286,24 @@
       }
     }
 
-    // NEXT 버튼 클릭 → 여러 innerText 순차 표시
-    // nextButton 클릭 핸들러를 아래처럼 수정하세요
+    // NEXT 버튼 클릭 → 대사 순차 출력
     nextButton.addEventListener('click', () => {
-      // 1) 선택지 숨기기
       choiceButtons.classList.add('hidden');
-      // (원하면 라벨, 인벤토리 버튼도 감출 수 있습니다)
       locationLabel.classList.add('hidden');
       inventoryBtn.classList.add('hidden');
 
-      // 2) 대사 보여주기
       if (nextIdx < nextDialogues.length) {
         nextButton.textContent = nextDialogues[nextIdx++];
         nextButton.classList.add('visible');
       }
-      // 마지막 대사 뒤에 실제 이동
       if (nextIdx === nextDialogues.length) {
         setTimeout(() => {
-          window.location.href = '/progress';
+          window.location.href = '/powersupplyroom';
         }, 800);
       }
     });
 
-
-    // 인벤토리 토글 & 닫기
+    // 인벤토리 토글
     inventoryBtn.addEventListener('click', toggleInventory);
     inventoryClose.addEventListener('click', toggleInventory);
     inventoryBackdrop.addEventListener('click', toggleInventory);

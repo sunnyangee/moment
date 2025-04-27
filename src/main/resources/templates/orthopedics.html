@@ -1,0 +1,210 @@
+<!-- ✅ 수정된 HTML (숙직실) -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>정형외과</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/21.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">1F 정형외과</div>
+
+      <div class="ui-overlay">
+        <!-- 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="석고 보관 캐비닛">석고 보관 캐비닛</button>
+          <button data-item="골격 모형">골격 모형</button>
+          <button data-item="관절 가동 측정기">관절 가동 측정기</button>
+          <button data-item="환자 기록 판넬">환자 기록 판넬</button>
+        </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">입구 바로 옆에 놓인 목발과 휠체어는 먼지에 덮여 있다. 벽에는 인체 골격 모형이 세워져 있었고, 관절 연결 부위엔 테이프가 칭칭 감겨 있었다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <!-- 설명 모달 -->
+        <div id="object-modal" class="object-modal hidden">
+          <button class="close-button" onclick="closeObjectModal()">X</button>
+          <div id="object-description" class="dialog-box">
+            <p id="object-description-text"></p>
+            <div class="dialog-indicator">▼</div>
+          </div>
+        </div>
+
+        <!-- 획득 확인 모달 -->
+        <div id="confirm-acquire-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
+            <button id="btn-acquire-ok">확인</button>
+            <button id="btn-acquire-cancel">취소</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button" onclick="toggleInventory()">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <button class="close-button" onclick="toggleInventory()">X</button>
+        <h3>인벤토리</h3>
+        <ul id="inventory-list"></ul>
+      </div>
+
+      <!-- NEXT 버튼 -->
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        const ul = document.getElementById('inventory-list');
+        ul.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          ul.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+
+    loadInventory();
+
+    function toggleInventory() {
+      document.getElementById('inventory-modal').classList.toggle('hidden');
+    }
+
+    function closeObjectModal() {
+      document.getElementById('object-modal').classList.add('hidden');
+      document.getElementById('confirm-acquire-modal').classList.add('hidden');
+      choiceButtons.classList.remove('fade-out', 'hidden');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size === totalItems) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+
+    const choiceButtons = document.getElementById('choice-buttons');
+    const dialogBox = document.getElementById('dialog-box');
+    const locationLabel = document.getElementById('location-label');
+    const roomImage = document.getElementById('room-image');
+    const objectModal = document.getElementById('object-modal');
+    const objectDescText = document.getElementById('object-description-text');
+    const nextButton = document.getElementById('next-button');
+    const inventoryModal = document.getElementById('inventory-modal');
+    const inventoryList = document.getElementById('inventory-list');
+    const confirmModal = document.getElementById('confirm-acquire-modal');
+    const confirmText = document.getElementById('confirm-acquire-text');
+    const btnOk = document.getElementById('btn-acquire-ok');
+    const btnCancel = document.getElementById('btn-acquire-cancel');
+
+    const clickedItems = new Set();
+    let currentItem = null;
+
+    const wrapper = document.querySelector('.viewport-wrapper');
+    const ua = navigator.userAgent.toLowerCase();
+    wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
+
+    const itemData = {
+      "석고 보관 캐비닛": {
+        description: "테이블마다 의자가 제멋대로 넘어가 있다. 그 중 유독 깔끔하게 정리된 한자리가 눈에 띄며, 놓인 트레이 아래에 찢긴 종이가 이질적으로 흐트러져 있다.",
+        acquirable: false
+      },
+      "골격 모형": {
+        description: "사람 전신 골격 모형이 서 있는데, 특정 부위에 불필요한 나사와 테이프가 감겨 있다. 가령 관자놀이라든지......",
+        acquirable: false
+      },
+      "관절 가동 측정기": {
+        description: "무거운 철문이다. 녹슨 자물쇠가 걸려 있다.",
+        acquirable: false
+      },
+      "환자 기록 판넬": {
+        dbKey: "판넬의 낙서",
+        description: "벽면에 붙은 판넬에는 치료 과정이 나열되어 있으며 유독 한 부분만 재차 덧씌운 흔적이 보인다.",
+        acquirable: true,
+        
+      }
+    };
+
+    const totalItems = Object.keys(itemData).length;
+
+    dialogBox.addEventListener('click', () => {
+      if (state === 0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(() => {
+          roomImage.src = '/images/21.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        }, 600);
+        state++;
+      }
+    });
+
+    document.querySelectorAll('#choice-buttons button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.item;
+        const info = itemData[key];
+        if (!info) return;
+        clickedItems.add(key);
+        currentItem = info;
+        choiceButtons.classList.add('fade-out');
+        setTimeout(() => {
+          choiceButtons.classList.add('hidden');
+          objectDescText.innerText = info.description;
+          objectModal.classList.remove('hidden');
+        }, 600);
+      });
+    });
+
+    objectModal.addEventListener('click', () => {
+      if (!currentItem || !currentItem.acquirable) {
+        return closeObjectModal();
+      }
+      confirmModal.dataset.pendingKey = currentItem.dbKey;
+      confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+      confirmModal.classList.remove('hidden');
+    });
+
+    btnOk.addEventListener('click', async () => {
+      const key = confirmModal.dataset.pendingKey;
+      closeObjectModal();
+      let json = { success: false };
+      try {
+        const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, {
+          method: 'POST'
+        });
+        json = await resp.json();
+      } catch {}
+      if (json.success) {
+        await loadInventory();
+      } else {
+        alert(json.message);
+      }
+    });
+
+    btnCancel.addEventListener('click', closeObjectModal);
+
+    let state = 0;
+    nextButton.addEventListener('click', () => {
+      window.location.href = '/ophthalmology';
+    });
+  </script>
+</body>
+</html>

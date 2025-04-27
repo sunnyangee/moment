@@ -1,0 +1,204 @@
+<!-- ✅ 수정된 HTML (숙직실) -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>화단</title>
+  <link rel="stylesheet" th:href="@{/css/home.css}" />
+</head>
+<body>
+  <div class="viewport-wrapper">
+    <div class="room-container">
+      <img id="room-image" src="/images/34.jpg" alt="방 이미지" class="room-image"/>
+      <div id="location-label" class="location-label hidden">화단</div>
+
+      <div class="ui-overlay">
+        <!-- 선택지 -->
+        <div id="choice-buttons" class="choice-buttons hidden">
+          <button data-item="화단 중앙부">화단 중앙부</button>
+          <button data-item="관리용 적재함">관리용 적재함</button>
+          <button data-item="배수구 주변">배수구 주변</button>
+        </div>
+
+        <!-- 대화 박스 -->
+        <div id="dialog-box" class="dialog-box">
+          <p id="dialog-text">옥상 가장자리 자리 잡은 화단은 쇠펜스로 구획되어 있다. 역시나 돔으로 막혀 빛은 들어오지 않는다.</p>
+          <div class="dialog-indicator">▼</div>
+        </div>
+
+        <!-- 설명 모달 -->
+        <div id="object-modal" class="object-modal hidden">
+          <button class="close-button" onclick="closeObjectModal()">X</button>
+          <div id="object-description" class="dialog-box">
+            <p id="object-description-text"></p>
+            <div class="dialog-indicator">▼</div>
+          </div>
+        </div>
+
+        <!-- 획득 확인 모달 -->
+        <div id="confirm-acquire-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-content">
+            <button class="close-button">&times;</button>
+            <p id="confirm-acquire-text">아이템을 획득하시겠습니까?</p>
+            <button id="btn-acquire-ok">확인</button>
+            <button id="btn-acquire-cancel">취소</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <button class="inventory-button" onclick="toggleInventory()">
+        <img src="/images/inventory.png" alt="인벤토리 아이콘" class="inventory-icon"/>
+      </button>
+      <div id="inventory-modal" class="inventory-modal hidden">
+        <button class="close-button" onclick="toggleInventory()">X</button>
+        <h3>인벤토리</h3>
+        <ul id="inventory-list"></ul>
+      </div>
+
+      <!-- NEXT 버튼 -->
+      <button id="next-button" class="next-button hidden">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    async function loadInventory() {
+      try {
+        const resp = await fetch('/api/items');
+        if (!resp.ok) throw new Error(resp.status);
+        const items = await resp.json();
+        const ul = document.getElementById('inventory-list');
+        ul.innerHTML = '';
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${item.name}</strong><br><small>${item.description}</small>`;
+          ul.appendChild(li);
+        });
+      } catch (e) {
+        console.error('인벤토리 로드 실패', e);
+      }
+    }
+
+    loadInventory();
+
+    function toggleInventory() {
+      document.getElementById('inventory-modal').classList.toggle('hidden');
+    }
+
+    function closeObjectModal() {
+      document.getElementById('object-modal').classList.add('hidden');
+      document.getElementById('confirm-acquire-modal').classList.add('hidden');
+      choiceButtons.classList.remove('fade-out', 'hidden');
+      choiceButtons.classList.add('fade-in');
+      setTimeout(() => choiceButtons.classList.remove('fade-in'), 600);
+      if (clickedItems.size === totalItems) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+
+    const choiceButtons = document.getElementById('choice-buttons');
+    const dialogBox = document.getElementById('dialog-box');
+    const locationLabel = document.getElementById('location-label');
+    const roomImage = document.getElementById('room-image');
+    const objectModal = document.getElementById('object-modal');
+    const objectDescText = document.getElementById('object-description-text');
+    const nextButton = document.getElementById('next-button');
+    const inventoryModal = document.getElementById('inventory-modal');
+    const inventoryList = document.getElementById('inventory-list');
+    const confirmModal = document.getElementById('confirm-acquire-modal');
+    const confirmText = document.getElementById('confirm-acquire-text');
+    const btnOk = document.getElementById('btn-acquire-ok');
+    const btnCancel = document.getElementById('btn-acquire-cancel');
+
+    const clickedItems = new Set();
+    let currentItem = null;
+
+    const wrapper = document.querySelector('.viewport-wrapper');
+    const ua = navigator.userAgent.toLowerCase();
+    wrapper.classList.add(/android|iphone|ipad|ipod/.test(ua) ? 'mobile-os' : 'desktop-os');
+
+    const itemData = {
+      "화단 중앙부": {
+        description: "유독 짙은 색의 흙이 모여 있고, 특정 식물들이 기이한 방향으로 자라 있다. 일부는 뿌리 끝이 날카롭게 갈라져 흙 밖으로 솟아 있다.",
+        acquirable: false
+      },
+      "관리용 적재함": {
+        dbKey: "호미",
+        description: "문을 열어보면 안에는 오래된 정원용 장갑, 호미, 작살처럼 생긴 수동 잡초 제거기 등이 들어있다. \n손잡이에 검은 얼룩이 말라붙어 있고, 도구 아래쪽에 낡은 천 조각이 엉켜 있다.",
+        acquirable: true
+      },
+      "배수구 주변": {
+        description: "화단 한쪽 구석의 배수구 주변엔 물웅덩이 형성되어 있으며, 배수관엔 낙엽과 정체불명의 찌꺼기가 얽혀 있다. 불쾌한 냄새가 코끝을 찌른다.",
+        acquirable: false
+      }
+    };
+
+    const totalItems = Object.keys(itemData).length;
+
+    dialogBox.addEventListener('click', () => {
+      if (state === 0) {
+        roomImage.classList.add('fade-out');
+        setTimeout(() => {
+          roomImage.src = '/images/34.jpg';
+          roomImage.classList.remove('fade-out');
+          dialogBox.classList.add('hidden');
+          choiceButtons.classList.remove('hidden');
+          locationLabel.classList.remove('hidden');
+        }, 600);
+        state++;
+      }
+    });
+
+    document.querySelectorAll('#choice-buttons button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.item;
+        const info = itemData[key];
+        if (!info) return;
+        clickedItems.add(key);
+        currentItem = info;
+        choiceButtons.classList.add('fade-out');
+        setTimeout(() => {
+          choiceButtons.classList.add('hidden');
+          objectDescText.innerText = info.description;
+          objectModal.classList.remove('hidden');
+        }, 600);
+      });
+    });
+
+    objectModal.addEventListener('click', () => {
+      if (!currentItem || !currentItem.acquirable) {
+        return closeObjectModal();
+      }
+      confirmModal.dataset.pendingKey = currentItem.dbKey;
+      confirmText.innerText = `${currentItem.dbKey} 아이템을 획득하시겠습니까?`;
+      confirmModal.classList.remove('hidden');
+    });
+
+    btnOk.addEventListener('click', async () => {
+      const key = confirmModal.dataset.pendingKey;
+      closeObjectModal();
+      let json = { success: false };
+      try {
+        const resp = await fetch(`/api/items/acquire?key=${encodeURIComponent(key)}`, {
+          method: 'POST'
+        });
+        json = await resp.json();
+      } catch {}
+      if (json.success) {
+        await loadInventory();
+      } else {
+        alert(json.message);
+      }
+    });
+
+    btnCancel.addEventListener('click', closeObjectModal);
+
+    let state = 0;
+    nextButton.addEventListener('click', () => {
+      window.location.href = '/storage';
+    });
+  </script>
+</body>
+</html>

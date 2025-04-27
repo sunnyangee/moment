@@ -9,7 +9,7 @@
 <body>
   <div class="viewport-wrapper">
     <div class="room-container">
-      <img id="room-image" src="/images/classroom2.jpg" alt="방 이미지" class="room-image"/>
+      <img id="room-image" src="/images/5.jpg" alt="방 이미지" class="room-image"/>
 
       <div id="location-label" class="location-label hidden">B1 ATM</div>
 
@@ -100,7 +100,7 @@
       "1 번 ATM 기계 본체":      { description: "왼쪽 기계는 화면이 깨졌고, 투입구도 휘어져 있다. ",                acquirable: false },
       "2 번 ATM 기계 본체":        { description: "화면에 [잔고 부족] 이 뜬 채로 멈춰 있으며, 투입구에 카드 하나가 꽉 끼어 있다.", acquirable: false },
       "3 번 ATM 기계 본체":        { description: "전원이 완전히 나가 있다. 크게 부서진 곳도 없어 원인을 찾기 어렵다.", acquirable: false },
-      "2 번 ATM 기계 본체":        { description: "구석에 낡은 cctv 카메라 하나가 달려 있다. 겉보기엔 전원이 꺼져 있는 듯하지만, 가까이 다가가면 렌즈가 아주 느리게 움직인다. 기분 탓인가?", acquirable: false }
+      "감시 카메라":        { description: "구석에 낡은 cctv 카메라 하나가 달려 있다. 겉보기엔 전원이 꺼져 있는 듯하지만, 가까이 다가가면 렌즈가 아주 느리게 움직인다. 기분 탓인가?", acquirable: false }
     };
     const totalItems = Object.keys(itemData).length;
 
@@ -133,7 +133,7 @@
       if (state === 0) {
         roomImage.classList.add('fade-out');
         setTimeout(() => {
-          roomImage.src = '/images/classroom2.jpg';
+          roomImage.src = '/images/5.jpg';
           roomImage.classList.remove('fade-out');
           dialogBox.classList.add('hidden');
           choiceButtons.classList.remove('hidden');

@@ -16,7 +16,7 @@ import java.util.List;
 public class HomeController {
 
     private static final List<String> SEQUENCE = List.of(
-        "start", "3-2", "3-3", "homeroom", "cafeteria", "nurse-office", "principalsoffice", "1ftoilet", "audiovisualroom", "overnightroom", "counselingroom", "1felevator", "1fstairs", "library", "teachersroom", "computerroom", "clubroom1", "clubroom2", "clubroom3", "artroom", "broadcastingroom", "studentcouncilroom", "bridge", "gym", "gym2f", "clubroom4", "clubroom5", "clubroom6", "stairs2f", "musicroom", "conveniencestore", "clubroom7", "clubroom8", "englishroom", "supplyroom", "scienceroom", "powersupplyroom", "computerserverroom", "pharmacy", "convenience", "atm", "foodcourt", "cookingroom", "rehabilitationroom", "allergy", "radiation"
+        "start", "3-2", "3-3", "homeroom", "cafeteria", "nurse-office", "principalsoffice", "1ftoilet", "audiovisualroom", "overnightroom", "counselingroom", "1felevator", "1fstairs", "library", "teachersroom", "computerroom", "clubroom1", "clubroom2", "clubroom3", "artroom", "broadcastingroom", "studentcouncilroom", "bridge", "gym", "gym2f", "clubroom4", "clubroom5", "clubroom6", "stairs2f", "musicroom", "conveniencestore", "clubroom7", "clubroom8", "englishroom", "supplyroom", "scienceroom", "powersupplyroom", "computerserverroom", "pharmacy", "convenience", "atm", "foodcourt", "cookingroom", "rehabilitationroom", "allergy", "radiation", "morgue", "administration", "intensivecareunit", "operatingroom", "emergency", "filmingroom", "xrayroom", "surgery", "medicine", "orthopedics", "ophthalmology", "injectionroom", "room201", "room202", "room203", "room204", "anticancer", "transplant", "bloodvessels", "kidney", "room301", "room302", "room303", "hosbridge", "rooftop", "watertank", "flower", "storage"
     );
 
     private final ProgressService progressService;
@@ -258,6 +258,118 @@ public class HomeController {
     @GetMapping("/radiation") // ← 하이픈 없이
     public String radiation(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
         return handleStage("radiation", userPrincipal, model);
+    }
+    @GetMapping("/morgue") // ← 하이픈 없이
+    public String morgue(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("morgue", userPrincipal, model);
+    }
+    @GetMapping("/administration") // ← 하이픈 없이
+    public String administration(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("administration", userPrincipal, model);
+    }
+    @GetMapping("/intensivecareunit") // ← 하이픈 없이
+    public String intensivecareunit(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("intensivecareunit", userPrincipal, model);
+    }
+    @GetMapping("/operatingroom") // ← 하이픈 없이
+    public String operatingroom(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("operatingroom", userPrincipal, model);
+    }
+    @GetMapping("/emergency") // ← 하이픈 없이
+    public String emergency(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("emergency", userPrincipal, model);
+    }
+    @GetMapping("/filmingroom") // ← 하이픈 없이
+    public String filmingroom(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("filmingroom", userPrincipal, model);
+    }
+    @GetMapping("/xrayroom") // ← 하이픈 없이
+    public String xrayroom(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("xrayroom", userPrincipal, model);
+    }
+    @GetMapping("/surgery") // ← 하이픈 없이
+    public String surgery(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("surgery", userPrincipal, model);
+    }
+    @GetMapping("/medicine") // ← 하이픈 없이
+    public String medicine(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("medicine", userPrincipal, model);
+    }
+    @GetMapping("/orthopedics") // ← 하이픈 없이
+    public String orthopedics(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("orthopedics", userPrincipal, model);
+    }
+    @GetMapping("/ophthalmology") // ← 하이픈 없이
+    public String ophthalmology(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("ophthalmology", userPrincipal, model);
+    }
+    @GetMapping("/injectionroom") // ← 하이픈 없이
+    public String injectionroom(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("injectionroom", userPrincipal, model);
+    }
+    @GetMapping("/room201") // ← 하이픈 없이
+    public String room201(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("room201", userPrincipal, model);
+    }
+    @GetMapping("/room202") // ← 하이픈 없이
+    public String room202(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("room202", userPrincipal, model);
+    }
+    @GetMapping("/room203") // ← 하이픈 없이
+    public String room203(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("room203", userPrincipal, model);
+    }
+    @GetMapping("/room204") // ← 하이픈 없이
+    public String room204(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("room204", userPrincipal, model);
+    }
+    @GetMapping("/anticancer") // ← 하이픈 없이
+    public String anticancer(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("anticancer", userPrincipal, model);
+    }
+    @GetMapping("/transplant") // ← 하이픈 없이
+    public String transplant(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("transplant", userPrincipal, model);
+    }
+    @GetMapping("/bloodvessels") // ← 하이픈 없이
+    public String bloodvessels(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("bloodvessels", userPrincipal, model);
+    }
+    @GetMapping("/kidney") // ← 하이픈 없이
+    public String kidney(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("kidney", userPrincipal, model);
+    }
+    @GetMapping("/room301") // ← 하이픈 없이
+    public String room301(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("room301", userPrincipal, model);
+    }
+    @GetMapping("/room302") // ← 하이픈 없이
+    public String room302(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("room302", userPrincipal, model);
+    }
+    @GetMapping("/room303") // ← 하이픈 없이
+    public String room303(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("room303", userPrincipal, model);
+    }
+    @GetMapping("/hosbridge") // ← 하이픈 없이
+    public String hosbridge(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("hosbridge", userPrincipal, model);
+    }
+    @GetMapping("/rooftop") // ← 하이픈 없이
+    public String rooftop(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("rooftop", userPrincipal, model);
+    }
+    @GetMapping("/watertank") // ← 하이픈 없이
+    public String watertank(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("watertank", userPrincipal, model);
+    }
+    @GetMapping("/flower") // ← 하이픈 없이
+    public String flower(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("flower", userPrincipal, model);
+    }
+    @GetMapping("/storage") // ← 하이픈 없이
+    public String storage(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        return handleStage("storage", userPrincipal, model);
     }
 
 
